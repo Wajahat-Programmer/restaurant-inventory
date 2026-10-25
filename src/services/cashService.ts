@@ -3,7 +3,9 @@ import { Db, inTransaction, Queryable, schema } from '../db/client';
 import { cashBalance } from '../domain/finance';
 import { assertPaisa, Paisa } from '../domain/money';
 import { dateSchema } from '../domain/schemas';
+import { audit } from './auditService';
 import { ValidationError } from './errors';
+import { requirePermission } from './session';
 
 const { cashEntries } = schema;
 
@@ -74,6 +76,7 @@ export async function addManualCash(
   db: Db,
   input: { date: string; direction: 'IN' | 'OUT'; amountPaisa: Paisa; note: string },
 ): Promise<void> {
+  requirePermission('finance');
   const d = dateSchema.safeParse(input.date);
   if (!d.success) {
     throw new ValidationError(d.error.issues[0].message);
@@ -84,7 +87,10 @@ export async function addManualCash(
   if (!Number.isInteger(input.amountPaisa) || input.amountPaisa <= 0) {
     throw new ValidationError('Amount must be more than 0');
   }
-  await inTransaction(db, tx => postCash(tx, { ...input, source: 'manual' }));
+  await inTransaction(db, async tx => {
+    await postCash(tx, { ...input, source: 'manual' });
+    await audit(tx, 'cash.manual', 'cash', null, { direction: input.direction, amount: input.amountPaisa });
+  });
 }
 
 export interface CashBook {
@@ -97,6 +103,7 @@ export interface CashBook {
 
 /** Entries between two dates (inclusive), with the balance before and after. */
 export async function getCashBook(db: Queryable, from: string, to: string): Promise<CashBook> {
+  requirePermission('finance');
   const before = await db
     .select({ direction: cashEntries.direction, amountPaisa: sql<number>`sum(${cashEntries.amountPaisa})` })
     .from(cashEntries)
@@ -122,6 +129,7 @@ export async function getCashBook(db: Queryable, from: string, to: string): Prom
 
 /** Balance of everything ever recorded. */
 export async function getCashBalance(db: Queryable): Promise<Paisa> {
+  requirePermission('finance');
   const rows = await db
     .select({ direction: cashEntries.direction, amountPaisa: sql<number>`sum(${cashEntries.amountPaisa})` })
     .from(cashEntries)

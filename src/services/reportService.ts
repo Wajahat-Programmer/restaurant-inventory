@@ -6,6 +6,7 @@ import { rangeMs } from '../domain/periods';
 import { getCashBalance } from './cashService';
 import { listItems } from './itemService';
 import { listSuppliers } from './purchaseService';
+import { requirePermission } from './session';
 
 const { sales, expenses, stockMovements, purchases, suppliers } = schema;
 
@@ -22,6 +23,7 @@ export interface PnlReport extends Pnl {
  * stamped with the time they were written.
  */
 export async function profitAndLoss(q: Queryable, from: string, to: string): Promise<PnlReport> {
+  requirePermission('finance');
   const [s] = await q
     .select({
       revenue: sql<number>`coalesce(sum(${sales.qty} * ${sales.pricePaisa}), 0)`,
@@ -78,6 +80,7 @@ export interface StockValuation {
 }
 
 export async function stockValuation(q: Queryable): Promise<StockValuation> {
+  requirePermission('finance');
   const rows = await listItems(q);
   const map = new Map<string, { valuePaisa: Paisa; items: number }>();
   for (const r of rows) {
@@ -93,6 +96,7 @@ export async function stockValuation(q: Queryable): Promise<StockValuation> {
 
 /** Purchases (not voided) per supplier in the range, biggest first. */
 export async function supplierSpend(q: Queryable, from: string, to: string) {
+  requirePermission('finance');
   return q
     .select({
       supplierId: purchases.supplierId,
@@ -121,6 +125,7 @@ export async function dashboard(
   today: string,
   month: { from: string; to: string },
 ): Promise<Dashboard> {
+  requirePermission('finance');
   const [todayPnl, monthPnl, items, sups, cash] = await Promise.all([
     profitAndLoss(q, today, today),
     profitAndLoss(q, month.from, month.to),

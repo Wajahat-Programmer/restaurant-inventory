@@ -22,6 +22,13 @@
       "when": 1792943522467,
       "tag": "0002_gray_forge",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1792946765211,
+      "tag": "0003_dear_dakota_north",
+      "breakpoints": true
     }
   ]
 }

@@ -59,44 +59,51 @@ async function writePacks(tx: Tx, itemId: number, packs: ItemData['packs']) {
   }
 }
 
-export async function createItem(
-  db: Db,
+/** Creates an item inside the caller's transaction (used by imports, which add many at once). */
+export async function createItemTx(
+  tx: Tx,
   input: ItemInput,
   opening?: { qtyBase: number; valuePaisa: number },
 ): Promise<number> {
   const data = parseItem(input);
   const open = opening ? openingStockSchema.parse(opening) : undefined;
+  const [row] = await tx
+    .insert(items)
+    .values({
+      name: data.name,
+      baseUnit: data.baseUnit,
+      categoryId: await categoryId(tx, data.categoryName),
+      parLevel: data.parLevel,
+      reorderPoint: data.reorderPoint,
+      shelfLifeDays: data.shelfLifeDays ?? null,
+      barcode: data.barcode ?? null,
+    })
+    .returning({ id: items.id });
+  await writePacks(tx, row.id, data.packs);
+  await tx.insert(stockLevels).values({ itemId: row.id });
+  if (open) {
+    await postMovement(
+      tx,
+      {
+        itemId: row.id,
+        type: 'ADJUST',
+        qtyBase: open.qtyBase,
+        valuePaisa: open.valuePaisa,
+        reason: 'Opening stock',
+      },
+      { refType: 'manual' },
+    );
+  }
+  return row.id;
+}
+
+export async function createItem(
+  db: Db,
+  input: ItemInput,
+  opening?: { qtyBase: number; valuePaisa: number },
+): Promise<number> {
   try {
-    return await inTransaction(db, async tx => {
-      const [row] = await tx
-        .insert(items)
-        .values({
-          name: data.name,
-          baseUnit: data.baseUnit,
-          categoryId: await categoryId(tx, data.categoryName),
-          parLevel: data.parLevel,
-          reorderPoint: data.reorderPoint,
-          shelfLifeDays: data.shelfLifeDays ?? null,
-          barcode: data.barcode ?? null,
-        })
-        .returning({ id: items.id });
-      await writePacks(tx, row.id, data.packs);
-      await tx.insert(stockLevels).values({ itemId: row.id });
-      if (open) {
-        await postMovement(
-          tx,
-          {
-            itemId: row.id,
-            type: 'ADJUST',
-            qtyBase: open.qtyBase,
-            valuePaisa: open.valuePaisa,
-            reason: 'Opening stock',
-          },
-          { refType: 'manual' },
-        );
-      }
-      return row.id;
-    });
+    return await inTransaction(db, tx => createItemTx(tx, input, opening));
   } catch (e) {
     return friendly(e, 'An item with this name or barcode');
   }

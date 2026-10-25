@@ -3,9 +3,11 @@ import { Db, inTransaction, Queryable, schema } from '../db/client';
 import { aggregateNeeds } from '../domain/recipes';
 import { dateSchema } from '../domain/schemas';
 import { formatQty } from '../domain/units';
+import { audit } from './auditService';
 import { postCash, reverseCash } from './cashService';
 import { must, ValidationError } from './errors';
 import { getLevel, postMovement, reverseMovement } from './ledgerService';
+import { requirePermission } from './session';
 
 const { sales, recipes, recipeLines, items } = schema;
 
@@ -112,6 +114,7 @@ export async function postSales(db: Db, input: SalesInput): Promise<number[]> {
 
 /** Puts the ingredients back and reverses the revenue, dated the day it is voided. */
 export async function voidSale(db: Db, saleId: number, date: string): Promise<void> {
+  requirePermission('void');
   const d = dateSchema.safeParse(date);
   if (!d.success) {
     throw new ValidationError(d.error.issues[0].message);
@@ -136,6 +139,7 @@ export async function voidSale(db: Db, saleId: number, date: string): Promise<vo
       await reverseMovement(tx, m.id, { refType: 'sale', refId: saleId });
     }
     await reverseCash(tx, 'sale', saleId, date, 'Sale voided');
+    await audit(tx, 'sale.void', 'sale', saleId, { revenue: s.qty * s.pricePaisa });
     await tx.update(sales).set({ status: 'VOID' }).where(eq(sales.id, saleId));
   });
 }

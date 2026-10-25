@@ -168,7 +168,9 @@ describe('applyUpdate', () => {
     const ports: UpdatePorts = {
       apkPath: '/cache/updates/app.apk',
       canInstall: async () => true,
-      openInstallSettings: async () => void log.push('settings'),
+      openInstallSettings: async () => {
+        log.push('settings');
+      },
       download: async (_u, to, onProgress) => {
         files.add(to);
         onProgress(0.5);
@@ -177,8 +179,12 @@ describe('applyUpdate', () => {
       },
       fileSize: async () => 1000,
       sha256: async () => SHA,
-      install: async () => void log.push('install'),
-      remove: async p => void files.delete(p),
+      install: async () => {
+        log.push('install');
+      },
+      remove: async p => {
+        files.delete(p);
+      },
       ...over,
     };
     return { ports, log, files };

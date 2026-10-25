@@ -293,3 +293,47 @@ export const cashEntries = sqliteTable(
   },
   t => [index('cash_date').on(t.date)],
 );
+
+/** People who can sign in. No users means the app is not locked. */
+export const users = sqliteTable('users', {
+  id: id(),
+  name: text('name').notNull().unique(),
+  role: text('role', { enum: ['owner', 'staff'] }).notNull(),
+  /** Salted PBKDF2 hash of the PIN. The PIN itself is never stored. */
+  pinHash: text('pin_hash').notNull(),
+  pinSalt: text('pin_salt').notNull(),
+  pinIterations: integer('pin_iterations').notNull(),
+  isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+  failedAttempts: integer('failed_attempts').notNull().default(0),
+  lockedUntil: integer('locked_until').notNull().default(0),
+  createdAt: createdAt(),
+});
+
+/** Who did what, and when. Append-only. */
+export const auditLog = sqliteTable(
+  'audit_log',
+  {
+    id: id(),
+    userId: integer('user_id').references(() => users.id),
+    actor: text('actor').notNull(),
+    action: text('action').notNull(),
+    entity: text('entity').notNull(),
+    entityId: integer('entity_id'),
+    /** Short JSON of what changed. */
+    detail: text('detail'),
+    createdAt: createdAt(),
+  },
+  t => [index('audit_created').on(t.createdAt)],
+);
+
+/** Every backup attempt, so the app can show the last good one and warn about failures. */
+export const backupLog = sqliteTable('backup_log', {
+  id: id(),
+  kind: text('kind', { enum: ['local', 'drive'] }).notNull(),
+  status: text('status', { enum: ['ok', 'failed'] }).notNull(),
+  fileName: text('file_name'),
+  sizeBytes: integer('size_bytes'),
+  driveFileId: text('drive_file_id'),
+  error: text('error'),
+  createdAt: createdAt(),
+});

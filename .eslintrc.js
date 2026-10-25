@@ -13,6 +13,11 @@ module.exports = {
   },
   overrides: [
     {
+      // Bit operations are the job here: base64 packing and constant-time comparison.
+      files: ['src/domain/base64*.ts', 'src/domain/crypto*.ts'],
+      rules: { 'no-bitwise': 'off' },
+    },
+    {
       files: ['src/theme/tokens.ts'],
       rules: { 'no-restricted-syntax': 'off' },
     },

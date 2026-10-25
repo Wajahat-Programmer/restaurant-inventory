@@ -1,9 +1,11 @@
 import { desc, eq } from 'drizzle-orm';
-import { Db, inTransaction, Queryable, schema } from '../db/client';
+import { Db, inTransaction, Queryable, schema, Tx } from '../db/client';
 import { dishCost, dishMargin } from '../domain/recipes';
 import { RecipeInput, recipeInputSchema } from '../domain/schemas';
 import { BaseUnit } from '../domain/units';
+import { audit } from './auditService';
 import { friendly, must, ValidationError } from './errors';
+import { requirePermission } from './session';
 
 const { recipes, recipeLines, items, stockLevels, itemPrices } = schema;
 
@@ -34,18 +36,22 @@ async function assertItemsExist(tx: Queryable, ids: number[]): Promise<void> {
   }
 }
 
-export async function createRecipe(db: Db, input: RecipeInput): Promise<number> {
+/** Creates a dish inside the caller's transaction (used by imports). */
+export async function createRecipeTx(tx: Tx, input: RecipeInput): Promise<number> {
   const data = parse(input);
+  await assertItemsExist(tx, data.lines.map(l => l.itemId));
+  const [r] = await tx
+    .insert(recipes)
+    .values({ name: data.name, sellPricePaisa: data.sellPricePaisa })
+    .returning({ id: recipes.id });
+  await tx.insert(recipeLines).values(data.lines.map(l => ({ recipeId: r.id, ...l })));
+  return r.id;
+}
+
+export async function createRecipe(db: Db, input: RecipeInput): Promise<number> {
+  requirePermission('recipes');
   try {
-    return await inTransaction(db, async tx => {
-      await assertItemsExist(tx, data.lines.map(l => l.itemId));
-      const [r] = await tx
-        .insert(recipes)
-        .values({ name: data.name, sellPricePaisa: data.sellPricePaisa })
-        .returning({ id: recipes.id });
-      await tx.insert(recipeLines).values(data.lines.map(l => ({ recipeId: r.id, ...l })));
-      return r.id;
-    });
+    return await inTransaction(db, tx => createRecipeTx(tx, input));
   } catch (e) {
     return friendly(e, 'A dish with this name');
   }
@@ -53,6 +59,7 @@ export async function createRecipe(db: Db, input: RecipeInput): Promise<number> 
 
 /** Replaces the dish and its ingredients. Past sales keep the price and cost they were made at. */
 export async function updateRecipe(db: Db, id: number, input: RecipeInput): Promise<void> {
+  requirePermission('recipes');
   const data = parse(input);
   try {
     await inTransaction(db, async tx => {
@@ -65,6 +72,7 @@ export async function updateRecipe(db: Db, id: number, input: RecipeInput): Prom
       must(res[0], 'Dish not found');
       await tx.delete(recipeLines).where(eq(recipeLines.recipeId, id));
       await tx.insert(recipeLines).values(data.lines.map(l => ({ recipeId: id, ...l })));
+      await audit(tx, 'recipe.update', 'recipe', id, { name: data.name, price: data.sellPricePaisa });
     });
   } catch (e) {
     friendly(e, 'A dish with this name');
@@ -72,6 +80,7 @@ export async function updateRecipe(db: Db, id: number, input: RecipeInput): Prom
 }
 
 export async function setRecipeActive(db: Db, id: number, isActive: boolean): Promise<void> {
+  requirePermission('recipes');
   await db.update(recipes).set({ isActive }).where(eq(recipes.id, id));
 }
 

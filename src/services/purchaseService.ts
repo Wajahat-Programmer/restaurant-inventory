@@ -9,8 +9,10 @@ import {
 } from '../domain/purchasing';
 import { dateSchema, SupplierInput, supplierInputSchema } from '../domain/schemas';
 import { friendly, must, ValidationError } from './errors';
+import { audit } from './auditService';
 import { postCash, reverseCash } from './cashService';
 import { postMovement, reverseMovement } from './ledgerService';
+import { requirePermission } from './session';
 
 const { suppliers, purchases, purchaseLines, supplierPayments, itemPrices } =
   schema;
@@ -218,6 +220,7 @@ export async function voidPurchase(
   /** The day the void happens; its cash reversal is dated then, not back-dated. */
   date: string,
 ): Promise<void> {
+  requirePermission('void');
   const d = dateSchema.safeParse(date);
   if (!d.success) {
     throw new ValidationError(d.error.issues[0].message);
@@ -243,6 +246,7 @@ export async function voidPurchase(
       await reverseMovement(tx, m.id, { refType: 'purchase', refId: purchaseId });
     }
     await reverseCash(tx, 'purchase', purchaseId, date, 'Purchase voided');
+    await audit(tx, 'purchase.void', 'purchase', purchaseId, { total: p.totalPaisa });
     await tx.update(purchases).set({ status: 'VOID' }).where(eq(purchases.id, purchaseId));
   });
 }
@@ -257,6 +261,7 @@ export interface PaymentInput {
 
 /** Pays a supplier. Overpaying what is owed is rejected. */
 export async function recordPayment(db: Db, input: PaymentInput): Promise<void> {
+  requirePermission('finance');
   assertPaisa(input.amountPaisa);
   if (input.amountPaisa <= 0) {
     throw new ValidationError('Payment must be more than 0');

@@ -7,6 +7,17 @@ export const SETTING_DEFAULTS = {
   'forecast.reviewDays': '7',
   'theme': 'system',
   'currency': 'PKR',
+  'auth.recovery': '',
+  'auth.autoLock': '5',
+  'auth.biometricUser': '',
+  'update.autoCheck': '1',
+  'update.lastCheck': '',
+  'update.available': '',
+  'update.notified': '',
+  'backup.lastOkAt': '',
+  'backup.passphraseSet': '0',
+  'drive.enabled': '0',
+  'drive.account': '',
 } as const;
 
 export type SettingKey = keyof typeof SETTING_DEFAULTS;

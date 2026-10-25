@@ -49,5 +49,15 @@ export const migrations: { tag: string; statements: string[] }[] = [
       "-- Backfill: money already paid before the cash book existed.\r\nINSERT INTO `cash_entries` (`date`, `direction`, `amount_paisa`, `source`, `ref_id`, `method`, `created_at`)\r\nSELECT `date`, 'OUT', `paid_paisa`, 'purchase', `id`, 'cash', `created_at` FROM `purchases` WHERE `status` = 'POSTED' AND `paid_paisa` > 0;",
       "INSERT INTO `cash_entries` (`date`, `direction`, `amount_paisa`, `source`, `ref_id`, `method`, `created_at`)\r\nSELECT `date`, 'OUT', `amount_paisa`, 'supplier_payment', `id`, `method`, `created_at` FROM `supplier_payments`;"
     ]
+  },
+  {
+    "tag": "0003_dear_dakota_north",
+    "statements": [
+      "CREATE TABLE `audit_log` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`user_id` integer,\n\t`actor` text NOT NULL,\n\t`action` text NOT NULL,\n\t`entity` text NOT NULL,\n\t`entity_id` integer,\n\t`detail` text,\n\t`created_at` integer DEFAULT (unixepoch() * 1000) NOT NULL,\n\tFOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action\n);",
+      "CREATE INDEX `audit_created` ON `audit_log` (`created_at`);",
+      "CREATE TABLE `backup_log` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`kind` text NOT NULL,\n\t`status` text NOT NULL,\n\t`file_name` text,\n\t`size_bytes` integer,\n\t`drive_file_id` text,\n\t`error` text,\n\t`created_at` integer DEFAULT (unixepoch() * 1000) NOT NULL\n);",
+      "CREATE TABLE `users` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`name` text NOT NULL,\n\t`role` text NOT NULL,\n\t`pin_hash` text NOT NULL,\n\t`pin_salt` text NOT NULL,\n\t`pin_iterations` integer NOT NULL,\n\t`is_active` integer DEFAULT true NOT NULL,\n\t`failed_attempts` integer DEFAULT 0 NOT NULL,\n\t`locked_until` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch() * 1000) NOT NULL\n);",
+      "CREATE UNIQUE INDEX `users_name_unique` ON `users` (`name`);"
+    ]
   }
 ];

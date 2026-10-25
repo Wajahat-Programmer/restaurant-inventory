@@ -1,7 +1,9 @@
 import { eq } from 'drizzle-orm';
 import { Db, inTransaction, Queryable, schema } from '../db/client';
 import { countVariance } from '../domain/stockStatus';
+import { audit } from './auditService';
 import { must, ValidationError } from './errors';
+import { requirePermission } from './session';
 import { postMovement } from './ledgerService';
 
 export const WASTE_REASONS = ['spoiled', 'expired', 'burnt', 'staff meal'] as const;
@@ -61,6 +63,7 @@ export async function adjustStock(
   db: Db,
   args: { itemId: number; deltaBase: number; note: string },
 ): Promise<void> {
+  requirePermission('adjust');
   const note = args.note.trim();
   if (!note) {
     throw new ValidationError('A note is required for an adjustment');
@@ -74,6 +77,7 @@ export async function adjustStock(
       { itemId: args.itemId, type: 'ADJUST', qtyBase: args.deltaBase, reason: note },
       { refType: 'manual' },
     );
+    await audit(tx, 'stock.adjust', 'item', args.itemId, { delta: args.deltaBase, note });
   });
 }
 
@@ -219,6 +223,7 @@ export async function postCount(
       .update(schema.stockCounts)
       .set({ status: 'POSTED' })
       .where(eq(schema.stockCounts.id, countId));
+    await audit(tx, 'count.post', 'count', countId, { adjusted });
     return adjusted;
   });
 }
