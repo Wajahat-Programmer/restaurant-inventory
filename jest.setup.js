@@ -92,6 +92,7 @@ jest.mock('react-native-biometrics', () => ({
 }));
 
 jest.mock('react-native-zip-archive', () => ({ zip: jest.fn(async () => ''), unzip: jest.fn(async () => '') }));
+jest.mock('react-native-html-to-pdf', () => ({ generatePDF: jest.fn(async () => ({ filePath: '/cache/report.pdf' })) }));
 jest.mock('react-native-share', () => ({ __esModule: true, default: { open: jest.fn(async () => ({})) } }));
 
 jest.mock('@react-native-documents/picker', () => ({

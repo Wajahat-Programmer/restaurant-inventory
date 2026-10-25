@@ -1,4 +1,5 @@
 import { screen, waitFor } from '@testing-library/react-native';
+import { generatePDF } from 'react-native-html-to-pdf';
 import { Db } from '../src/db/client';
 import { createTestDb } from '../src/db/testing';
 import { getCashBalance } from '../src/services/cashService';
@@ -234,6 +235,24 @@ describe('reports and dashboard', () => {
     await press('report-period-prev');
     await waitFor(() => expect(text('pnl-revenue')).toBe('Rs 0.00'));
     expect(text('pnl-foodcost')).toBe('—');
+  });
+
+  it('makes a PDF of each report and says so', async () => {
+    await trading();
+    await openApp(db, 'home');
+    await goMore('reports');
+    await waitFor(() => expect(text('pnl-revenue')).toBe('Rs 1,500.00'));
+    for (const [id, title] of [['pdf-pnl', 'Profit and loss'], ['pdf-stock', 'Stock valuation'], ['pdf-wastage', 'Wastage']]) {
+      (generatePDF as jest.Mock).mockClear();
+      await press(id);
+      await waitFor(() => expect(text('pdf-note')).toContain('PDF ready'));
+      const arg = (generatePDF as jest.Mock).mock.calls[0][0];
+      expect(arg.html).toContain(title);
+      expect(arg.fileName).not.toMatch(/\.pdf$/);
+    }
+    (generatePDF as jest.Mock).mockRejectedValueOnce(new Error('no space left'));
+    await press('pdf-pnl');
+    await waitFor(() => expect(text('pdf-note')).toBe('✖ no space left'));
   });
 
   it('puts today on the dashboard', async () => {
