@@ -1,0 +1,25 @@
+appId: com.restaurantinventory
+name: Form validation keeps the form open and explains the problem
+---
+- runFlow: subflows/launch.yaml
+- tapOn:
+    id: "fab-add-item"
+- scrollUntilVisible:
+    element:
+      id: "save-item"
+- tapOn:
+    id: "save-item"
+- assertVisible: "✖ Name is required"
+- tapOn:
+    id: "field-name"
+- inputText: Flour
+- tapOn:
+    id: "field-parLevel"
+- inputText: abc
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "save-item"
+- tapOn:
+    id: "save-item"
+- assertVisible: ".*Par level must be a number.*"

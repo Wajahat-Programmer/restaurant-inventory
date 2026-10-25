@@ -3,6 +3,7 @@ import { Db, schema } from '../db/client';
 import { createTestDb } from '../db/testing';
 import { PostedMovement, replay } from '../domain/ledger';
 import { createItem, getItem, listItemPacks, listItems, setItemActive, updateItem } from './itemService';
+import { attachPhoto, deletePhoto, listPhotos, setPrimaryPhoto } from './photoService';
 import {
   createSupplier,
   listPurchases,
@@ -365,5 +366,41 @@ describe('stock count', () => {
     await setCounted(db, line.lineId, 5);
     await setCounted(db, line.lineId, null); // un-count
     expect((await getCount(db, countId)).lines[0].countedQty).toBeNull();
+  });
+});
+
+describe('photos', () => {
+  const files = (n: number) => ({
+    originalPath: `/p/o${n}.jpg`,
+    cutoutPath: n % 2 ? `/p/c${n}.png` : null,
+    thumbPath: `/p/t${n}.webp`,
+    width: 768,
+    height: 1024,
+  });
+
+  it('first photo is primary; exactly one primary afterwards', async () => {
+    const id = await createItem(db, rice());
+    const a = await attachPhoto(db, id, files(1));
+    const b = await attachPhoto(db, id, files(2));
+    expect((await listPhotos(db, id)).map(p => [p.id, p.isPrimary])).toEqual([[a, true], [b, false]]);
+    await setPrimaryPhoto(db, b);
+    expect((await listPhotos(db, id)).map(p => [p.id, p.isPrimary])).toEqual([[b, true], [a, false]]);
+  });
+
+  it('deleting the primary promotes the newest and returns files to remove', async () => {
+    const id = await createItem(db, rice());
+    const a = await attachPhoto(db, id, files(1));
+    const b = await attachPhoto(db, id, files(2));
+    expect(await deletePhoto(db, a)).toEqual(['/p/o1.jpg', '/p/c1.png', '/p/t1.webp']);
+    expect((await listPhotos(db, id)).map(p => [p.id, p.isPrimary])).toEqual([[b, true]]);
+    expect(await deletePhoto(db, b)).toEqual(['/p/o2.jpg', '/p/t2.webp']);
+    expect(await listPhotos(db, id)).toEqual([]);
+  });
+
+  it('rejects a photo for a missing item or without files', async () => {
+    await expect(attachPhoto(db, 999, files(1))).rejects.toThrow('Item not found');
+    const id = await createItem(db, rice());
+    await expect(attachPhoto(db, id, { ...files(1), thumbPath: '' })).rejects.toThrow('missing');
+    await expect(deletePhoto(db, 999)).rejects.toThrow('Photo not found');
   });
 });

@@ -3,6 +3,15 @@ import { StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Text } from 'react-native-paper';
 import { Db } from '../db/client';
 
+/** Drizzle wraps driver errors; show the whole chain so the cause is visible. */
+function describe(e: unknown): string {
+  const parts: string[] = [];
+  for (let cur = e; cur instanceof Error && parts.length < 4; cur = cur.cause) {
+    parts.push(cur.message);
+  }
+  return parts.length ? parts.join(' → ') : String(e);
+}
+
 const DbContext = createContext<Db | null>(null);
 
 /** Opens the database and runs migrations before any screen renders. */
@@ -17,7 +26,7 @@ export function DbProvider({ children, db: injected }: { children: ReactNode; db
       return;
     }
     // Imported lazily so Jest never loads the native module.
-    import('../db/opsqlite').then(m => m.openAppDb()).then(setDb, e => setError(String(e?.message ?? e)));
+    import('../db/opsqlite').then(m => m.openAppDb()).then(setDb, e => setError(describe(e)));
   }, [injected]);
 
   if (error) {

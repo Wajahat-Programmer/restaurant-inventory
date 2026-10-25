@@ -1,0 +1,7 @@
+# Fresh install state. Debug builds fetch their bundle from Metro on launch.
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: "tab-stock"
+    timeout: 120000

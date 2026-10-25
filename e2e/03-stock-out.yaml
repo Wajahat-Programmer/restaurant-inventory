@@ -1,0 +1,70 @@
+appId: com.restaurantinventory
+name: Issue, over-issue guard, waste and adjust
+---
+- runFlow: subflows/launch.yaml
+- runFlow:
+    file: subflows/add-item.yaml
+    env:
+      NAME: Rice
+      QTY: "1000"
+      COST: "100"
+- tapOn:
+    id: "item-Rice"
+- assertVisible:
+    id: "detail-qty"
+    text: "1 kg"
+- tapOn:
+    id: "act-issue"
+- tapOn:
+    id: "field-qty"
+- inputText: "250"
+- hideKeyboard
+- tapOn:
+    id: "submit-action"
+- assertVisible:
+    id: "detail-qty"
+    text: "750 g"
+# Over-issue is refused and stock is unchanged.
+- tapOn:
+    id: "act-issue"
+- tapOn:
+    id: "field-qty"
+- inputText: "751"
+- hideKeyboard
+- tapOn:
+    id: "submit-action"
+- assertVisible: ".*Insufficient stock.*"
+- tapOn:
+    id: "field-qty"
+- eraseText: 5
+- inputText: "50"
+- hideKeyboard
+- tapOn:
+    id: "submit-action"
+- assertVisible:
+    id: "detail-qty"
+    text: "700 g"
+# Waste needs a reason; pick one.
+- tapOn:
+    id: "act-waste"
+- tapOn:
+    id: "field-qty"
+- inputText: "100"
+- hideKeyboard
+- tapOn:
+    id: "reason-burnt"
+- tapOn:
+    id: "submit-action"
+- assertVisible:
+    id: "detail-qty"
+    text: "600 g"
+# Adjust requires a note.
+- tapOn:
+    id: "act-adjust"
+- tapOn:
+    id: "field-qty"
+- inputText: "5"
+- hideKeyboard
+- tapOn:
+    id: "submit-action"
+- assertVisible: ".*note is required.*"

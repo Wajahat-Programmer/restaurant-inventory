@@ -4,6 +4,9 @@ import { createDb, Db, migrate, SqlExecutor } from './client';
 /** The only file that imports the native SQLite module. */
 export async function openAppDb(name = 'restaurant.db'): Promise<Db> {
   const conn = open({ name });
+  // A JS reload mid-transaction leaves the (cached) native connection inside
+  // an open transaction. Roll it back so the next run starts clean.
+  await conn.execute('ROLLBACK').catch(() => undefined);
   await conn.execute('PRAGMA foreign_keys = ON');
   const exec: SqlExecutor = async (query, params, method) => {
     const { rawRows } = await conn.executeRaw(query, params as never[]);

@@ -1,0 +1,29 @@
+appId: com.restaurantinventory
+name: Stock count shows variance and posts an adjustment
+---
+- runFlow: subflows/launch.yaml
+- runFlow:
+    file: subflows/add-item.yaml
+    env:
+      NAME: Rice
+      QTY: "1000"
+      COST: "100"
+- tapOn:
+    id: "tab-count"
+- tapOn:
+    id: "start-count"
+- tapOn:
+    id: "counted-Rice"
+- inputText: "900"
+- hideKeyboard
+- assertVisible: "－ 100 g less"
+- tapOn:
+    id: "post-count"
+- assertVisible: "✓ Count posted: 1 item adjusted."
+- tapOn:
+    id: "tab-stock"
+- tapOn:
+    id: "item-Rice"
+- assertVisible:
+    id: "detail-qty"
+    text: "900 g"

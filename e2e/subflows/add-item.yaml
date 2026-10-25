@@ -1,0 +1,24 @@
+# env: NAME, QTY (opening qty in base units), COST (total rupees)
+- tapOn:
+    id: "tab-stock"
+- tapOn:
+    id: "fab-add-item"
+- tapOn:
+    id: "field-name"
+- inputText: ${NAME}
+- tapOn:
+    id: "field-openingQty"
+- inputText: ${QTY}
+- tapOn:
+    id: "field-openingValue"
+- inputText: ${COST}
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "save-item"
+- tapOn:
+    id: "save-item"
+- extendedWaitUntil:
+    visible:
+      id: "item-${NAME}"
+    timeout: 15000

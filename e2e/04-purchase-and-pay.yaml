@@ -1,0 +1,83 @@
+appId: com.restaurantinventory
+name: Supplier, purchase on credit, partial payment, overpayment guard
+---
+- runFlow: subflows/launch.yaml
+- runFlow:
+    file: subflows/add-item.yaml
+    env:
+      NAME: Rice
+      QTY: "1"
+      COST: "0"
+- tapOn:
+    id: "tab-suppliers"
+- tapOn:
+    id: "fab-add-supplier"
+- tapOn:
+    id: "field-supplier-name"
+- inputText: Al-Noor
+- hideKeyboard
+- tapOn:
+    id: "save-supplier"
+- assertVisible: "✓ Settled"
+- tapOn:
+    id: "tab-purchases"
+- tapOn:
+    id: "fab-add-purchase"
+- tapOn:
+    id: "pick-supplier"
+- tapOn:
+    id: "pick-supplier-Al-Noor"
+- tapOn:
+    id: "line-0-item"
+- tapOn:
+    id: "line-0-item-Rice"
+- tapOn:
+    id: "line-0-qty"
+- inputText: "1000"
+- tapOn:
+    id: "line-0-price"
+- inputText: "2"
+- hideKeyboard
+- assertVisible:
+    id: "purchase-total"
+    text: "Total Rs 2,000.00"
+- scrollUntilVisible:
+    element:
+      id: "field-paid"
+- tapOn:
+    id: "field-paid"
+- inputText: "0"
+- hideKeyboard
+- assertVisible: "Owed to supplier: Rs 2,000.00"
+- scrollUntilVisible:
+    element:
+      id: "save-purchase"
+- tapOn:
+    id: "save-purchase"
+- assertVisible: "Al-Noor"
+- tapOn:
+    id: "tab-suppliers"
+- assertVisible: "⚠ Owe Rs 2,000.00"
+- tapOn:
+    id: "supplier-Al-Noor"
+- tapOn:
+    id: "field-payment"
+- inputText: "500"
+- hideKeyboard
+- tapOn:
+    id: "pay-amount"
+- assertVisible:
+    id: "supplier-due"
+    text: "⚠ Owe Rs 1,500.00"
+- tapOn:
+    id: "field-payment"
+- inputText: "99999"
+- hideKeyboard
+- tapOn:
+    id: "pay-amount"
+- assertVisible: ".*more than what is owed.*"
+- tapOn:
+    id: "pay-full"
+- assertVisible:
+    id: "supplier-due"
+    text: "✓ Settled"
