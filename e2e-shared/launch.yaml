@@ -1,3 +1,5 @@
+appId: com.restaurantinventory
+---
 # Fresh install state. Debug builds fetch their bundle from Metro on launch.
 - launchApp:
     clearState: true

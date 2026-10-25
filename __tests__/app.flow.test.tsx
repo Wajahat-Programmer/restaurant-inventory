@@ -239,13 +239,38 @@ describe('stock count', () => {
     expect(await screen.findByTestId('count-progress')).toBeTruthy();
     expect(text('count-progress')).toMatch(/: 0 of 2 counted$/);
     await type('counted-Rice', '900');
-    await fireEvent(screen.getByTestId('counted-Rice'), 'blur');
     expect(await screen.findByText('－ 100 g less')).toBeTruthy();
 
     await press('post-count');
     expect(await screen.findByTestId('count-message')).toBeTruthy();
     expect(text('count-message')).toBe('✓ Count posted: 1 item adjusted.');
     expect((await getItem(db, id)).qtyBase).toBe(900);
+  });
+
+  it('posts typed counts without needing the field to lose focus', async () => {
+    const id = await createItem(db, { name: 'Rice', baseUnit: 'g' }, { qtyBase: 1000, valuePaisa: 10000 });
+    await open();
+    await press('tab-count');
+    await press('start-count');
+    await screen.findByTestId('counted-Rice');
+    await type('counted-Rice', '1100');
+    expect(await screen.findByText('＋ 100 g more')).toBeTruthy();
+    expect(text('count-progress')).toMatch(/: 1 of 1 counted$/);
+    await press('post-count');
+    await screen.findByTestId('count-message');
+    expect((await getItem(db, id)).qtyBase).toBe(1100);
+  });
+
+  it('flags a bad count instead of posting it', async () => {
+    await createItem(db, { name: 'Rice', baseUnit: 'g' }, { qtyBase: 1000, valuePaisa: 10000 });
+    await open();
+    await press('tab-count');
+    await press('start-count');
+    await screen.findByTestId('counted-Rice');
+    await type('counted-Rice', '12x');
+    expect(await screen.findByText('✖ Enter a number like 2 or 1.5')).toBeTruthy();
+    await press('post-count');
+    expect(await screen.findByText(/Rice: enter a quantity/)).toBeTruthy();
   });
 
   it('will not post an empty count', async () => {

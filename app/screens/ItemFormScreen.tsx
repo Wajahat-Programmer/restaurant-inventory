@@ -85,8 +85,8 @@ export default function ItemFormScreen({ navigation, route }: RootProps<'ItemFor
       />
       <Field control={control} name="categoryName" label="Category (optional)" />
       <Row>
-        <Field control={control} name="parLevel" label="Par level" keyboard="decimal-pad" />
-        <Field control={control} name="reorderPoint" label="Reorder point" keyboard="decimal-pad" />
+        <Field control={control} name="parLevel" label="Par level" keyboard="decimal-pad" grow />
+        <Field control={control} name="reorderPoint" label="Reorder point" keyboard="decimal-pad" grow />
       </Row>
       <Field control={control} name="shelfLifeDays" label="Shelf life (days)" keyboard="number-pad" />
       <Field control={control} name="barcode" label="Barcode (optional)" />
@@ -94,8 +94,8 @@ export default function ItemFormScreen({ navigation, route }: RootProps<'ItemFor
       <Text variant="titleSmall">Pack sizes (e.g. 1 bag = 25000)</Text>
       {packs.fields.map((f, i) => (
         <Row key={f.id}>
-          <Field control={control} name={`packs.${i}.packName`} label="Pack" testID={`pack-name-${i}`} />
-          <Field control={control} name={`packs.${i}.size`} label="Base units" keyboard="decimal-pad" testID={`pack-size-${i}`} />
+          <Field control={control} name={`packs.${i}.packName`} label="Pack" testID={`pack-name-${i}`} grow />
+          <Field control={control} name={`packs.${i}.size`} label="Base units" keyboard="decimal-pad" testID={`pack-size-${i}`} grow />
           <Btn testID={`pack-remove-${i}`} onPress={() => packs.remove(i)}>
             Remove
           </Btn>
@@ -109,8 +109,8 @@ export default function ItemFormScreen({ navigation, route }: RootProps<'ItemFor
         <>
           <Text variant="titleSmall">Opening stock (optional)</Text>
           <Row>
-            <Field control={control} name="openingQty" label="Quantity" keyboard="decimal-pad" />
-            <Field control={control} name="openingValue" label="Total cost (Rs)" keyboard="decimal-pad" />
+            <Field control={control} name="openingQty" label="Quantity" keyboard="decimal-pad" grow />
+            <Field control={control} name="openingValue" label="Total cost (Rs)" keyboard="decimal-pad" grow />
           </Row>
         </>
       )}

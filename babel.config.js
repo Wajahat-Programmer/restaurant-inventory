@@ -7,7 +7,7 @@ module.exports = {
       // Hermes mis-binds large destructured parameter lists captured by
       // closures in react-navigation (ReferenceError at render). Compile the
       // destructuring away for that package only.
-      test: /node_modules[\/]@react-navigation[\/]/,
+      test: /node_modules[/\\]@react-navigation[/\\]/,
       plugins: [
         '@babel/plugin-transform-parameters',
         '@babel/plugin-transform-destructuring',

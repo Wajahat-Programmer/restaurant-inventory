@@ -356,6 +356,35 @@ describe('stock count', () => {
     expect(await getItem(db, a)).toMatchObject({ qtyBase: 1100, valuePaisa: 11000 });
   });
 
+  it('applies unsaved entries in the same transaction as the post', async () => {
+    const a = await createItem(db, rice(), { qtyBase: 1000, valuePaisa: 10000 });
+    const b = await createItem(db, { name: 'Salt', baseUnit: 'g' }, { qtyBase: 100, valuePaisa: 100 });
+    const countId = await startCount(db, '2026-10-25');
+    const lines = (await getCount(db, countId)).lines;
+    const lineOf = (id: number) => lines.find(l => l.itemId === id)!.lineId;
+
+    // A bad entry rejects everything and leaves the count open and untouched.
+    await expect(
+      postCount(db, countId, [{ lineId: lineOf(a), countedQty: 900 }, { lineId: 99999, countedQty: 1 }]),
+    ).rejects.toThrow('not part of this count');
+    expect((await getCount(db, countId)).status).toBe('OPEN');
+    expect((await getCount(db, countId)).lines.every(l => l.countedQty === null)).toBe(true);
+    expect((await getItem(db, a)).qtyBase).toBe(1000);
+
+    await expect(
+      postCount(db, countId, [{ lineId: lineOf(a), countedQty: -1 }]),
+    ).rejects.toThrow('negative');
+
+    expect(
+      await postCount(db, countId, [
+        { lineId: lineOf(a), countedQty: 900 },
+        { lineId: lineOf(b), countedQty: 100 },
+      ]),
+    ).toBe(1);
+    expect((await getItem(db, a)).qtyBase).toBe(900);
+    expect((await getItem(db, b)).qtyBase).toBe(100);
+  });
+
   it('refuses to post an empty count or start with no items', async () => {
     await expect(startCount(db, '2026-10-25')).rejects.toThrow('Add items');
     await createItem(db, rice());

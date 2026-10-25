@@ -1,7 +1,7 @@
 appId: com.restaurantinventory
 name: Form validation keeps the form open and explains the problem
 ---
-- runFlow: subflows/launch.yaml
+- runFlow: ../e2e-shared/launch.yaml
 - tapOn:
     id: "fab-add-item"
 - scrollUntilVisible:

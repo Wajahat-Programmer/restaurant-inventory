@@ -181,12 +181,32 @@ export async function openCountId(db: Queryable): Promise<number | null> {
  * Posts COUNT adjustments for every counted line whose live stock differs from
  * what was counted. Uncounted lines are left alone.
  */
-export async function postCount(db: Db, countId: number): Promise<number> {
+export async function postCount(
+  db: Db,
+  countId: number,
+  /** Counts typed but not yet saved; applied in the same transaction. */
+  entries: { lineId: number; countedQty: number | null }[] = [],
+): Promise<number> {
+  for (const e of entries) {
+    if (e.countedQty !== null && (!(e.countedQty >= 0) || !Number.isFinite(e.countedQty))) {
+      throw new ValidationError('Counted quantity cannot be negative');
+    }
+  }
   return inTransaction(db, async tx => {
-    const count = await getCount(tx, countId);
-    if (count.status !== 'OPEN') {
+    const before = await getCount(tx, countId);
+    if (before.status !== 'OPEN') {
       throw new ValidationError('This count is already posted');
     }
+    for (const e of entries) {
+      if (!before.lines.some(l => l.lineId === e.lineId)) {
+        throw new ValidationError('That line is not part of this count');
+      }
+      await tx
+        .update(schema.countLines)
+        .set({ countedQty: e.countedQty })
+        .where(eq(schema.countLines.id, e.lineId));
+    }
+    const count = await getCount(tx, countId);
     if (!count.lines.some(l => l.countedQty !== null)) {
       throw new ValidationError('Count at least one item before posting');
     }

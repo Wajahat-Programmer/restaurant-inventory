@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Card, Text, TextInput } from 'react-native-paper';
+import { countVariance } from '../../src/domain/stockStatus';
 import { formatQty, parseQty } from '../../src/domain/units';
 import { useQuery, useWrite } from '../../src/features/data';
 import { Body, Btn, ErrorText, todayISO, useColors } from '../../src/features/ui';
@@ -9,29 +10,28 @@ import {
   getCount,
   openCountId,
   postCount,
-  setCounted,
   startCount,
 } from '../../src/services/stockService';
 import { spacing } from '../../src/theme/tokens';
 
-function CountLine({ line, onError }: { line: CountLineRow; onError: (m: string | null) => void }) {
-  const c = useColors();
-  const write = useWrite();
-  const [text, setText] = useState(line.countedQty === null ? '' : String(line.countedQty));
-  const v = line.variance;
+/** Typed text for a line, or the saved value if the user has not touched it. */
+function shown(line: CountLineRow, drafts: Record<number, string>): string {
+  return drafts[line.lineId] ?? (line.countedQty === null ? '' : String(line.countedQty));
+}
 
-  const save = async () => {
-    onError(null);
-    const qty = text.trim() === '' ? null : parseQty(text, { allowZero: true });
-    if (text.trim() !== '' && qty === null) {
-      onError(`${line.itemName}: enter a quantity like 2 or 1.5`);
-      return;
-    }
-    const res = await write(db => setCounted(db, line.lineId, qty));
-    if (!res.ok) {
-      onError(res.error);
-    }
-  };
+function CountLine({
+  line,
+  text,
+  onChange,
+}: {
+  line: CountLineRow;
+  text: string;
+  onChange: (t: string) => void;
+}) {
+  const c = useColors();
+  const qty = text.trim() === '' ? null : parseQty(text, { allowZero: true });
+  const v = qty === null ? null : countVariance(line.systemQty, qty);
+  const invalid = text.trim() !== '' && qty === null;
 
   return (
     <Card testID={`count-line-${line.itemName}`}>
@@ -39,6 +39,7 @@ function CountLine({ line, onError }: { line: CountLineRow; onError: (m: string 
         <View style={styles.flex}>
           <Text variant="titleMedium">{line.itemName}</Text>
           <Text style={{ color: c.textSecondary }}>{`System: ${formatQty(line.systemQty, line.baseUnit)}`}</Text>
+          {invalid && <Text style={{ color: c.danger }}>✖ Enter a number like 2 or 1.5</Text>}
           {v !== null && (
             <Text
               testID={`variance-${line.itemName}`}
@@ -54,8 +55,8 @@ function CountLine({ line, onError }: { line: CountLineRow; onError: (m: string 
           label={`Counted (${line.baseUnit})`}
           keyboardType="decimal-pad"
           value={text}
-          onChangeText={setText}
-          onBlur={save}
+          error={invalid}
+          onChangeText={onChange}
         />
       </Card.Content>
     </Card>
@@ -67,6 +68,7 @@ export default function CountScreen() {
   const write = useWrite();
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<Record<number, string>>({});
 
   const { data } = useQuery(async db => {
     const id = await openCountId(db);
@@ -76,16 +78,28 @@ export default function CountScreen() {
   const start = async () => {
     setError(null);
     setMessage(null);
+    setDrafts({});
     const res = await write(db => startCount(db, todayISO()));
     if (!res.ok) {
       setError(res.error);
     }
   };
 
-  const post = async (countId: number) => {
+  const post = async (countId: number, lines: CountLineRow[]) => {
     setError(null);
-    const res = await write(db => postCount(db, countId));
+    const entries: { lineId: number; countedQty: number | null }[] = [];
+    for (const l of lines) {
+      const t = shown(l, drafts).trim();
+      const qty = t === '' ? null : parseQty(t, { allowZero: true });
+      if (t !== '' && qty === null) {
+        setError(`${l.itemName}: enter a quantity like 2 or 1.5`);
+        return;
+      }
+      entries.push({ lineId: l.lineId, countedQty: qty });
+    }
+    const res = await write(db => postCount(db, countId, entries));
     if (res.ok) {
+      setDrafts({});
       setMessage(`Count posted: ${res.value} item${res.value === 1 ? '' : 's'} adjusted.`);
     } else {
       setError(res.error);
@@ -108,7 +122,7 @@ export default function CountScreen() {
     );
   }
 
-  const counted = data.lines.filter(l => l.countedQty !== null).length;
+  const counted = data.lines.filter(l => shown(l, drafts).trim() !== '').length;
   return (
     <Body>
       <Text variant="titleMedium" testID="count-progress">
@@ -116,9 +130,14 @@ export default function CountScreen() {
       </Text>
       <ErrorText message={error} />
       {data.lines.map(l => (
-        <CountLine key={`${l.lineId}-${l.countedQty}`} line={l} onError={setError} />
+        <CountLine
+          key={l.lineId}
+          line={l}
+          text={shown(l, drafts)}
+          onChange={t => setDrafts(d => ({ ...d, [l.lineId]: t }))}
+        />
       ))}
-      <Btn testID="post-count" mode="contained" onPress={() => post(data.id)}>
+      <Btn testID="post-count" mode="contained" onPress={() => post(data.id, data.lines)}>
         Post count and adjust stock
       </Btn>
     </Body>

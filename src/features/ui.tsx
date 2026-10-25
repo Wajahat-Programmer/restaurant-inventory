@@ -1,6 +1,12 @@
 import { ReactNode, useState } from 'react';
 import { Control, Controller, FieldPath, FieldValues } from 'react-hook-form';
-import { KeyboardTypeOptions, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  KeyboardTypeOptions,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { Button, ButtonProps, HelperText, Text, TextInput, useTheme } from 'react-native-paper';
 import { StockStatus, STATUS_LABEL } from '../domain/stockStatus';
 import { colors, fontSize, MIN_TOUCH_TARGET, spacing, ThemeMode } from '../theme/tokens';
@@ -75,13 +81,18 @@ export function Select<V extends string | number>({
 /** Scrollable screen body on the themed background. */
 export function Body({ children }: { children: ReactNode }) {
   const c = useColors();
+  // Edge-to-edge Android does not resize the window for the keyboard, so the
+  // body makes room itself; otherwise lower fields stay hidden while typing.
   return (
-    <ScrollView
-      style={{ backgroundColor: c.background }}
-      contentContainerStyle={styles.body}
-      keyboardShouldPersistTaps="handled">
-      {children}
-    </ScrollView>
+    <KeyboardAvoidingView
+      style={[styles.fill, { backgroundColor: c.background }]}
+      behavior="padding">
+      <ScrollView
+        contentContainerStyle={styles.body}
+        keyboardShouldPersistTaps="handled">
+        {children}
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -121,6 +132,8 @@ interface FieldProps<T extends FieldValues> {
   multiline?: boolean;
   suffix?: string;
   testID?: string;
+  /** Share a Row evenly with sibling fields. */
+  grow?: boolean;
 }
 
 /** Paper text input bound to react-hook-form, with the error shown below. */
@@ -132,13 +145,14 @@ export function Field<T extends FieldValues>({
   multiline,
   suffix,
   testID,
+  grow,
 }: FieldProps<T>) {
   return (
     <Controller
       control={control}
       name={name}
       render={({ field, fieldState }) => (
-        <View>
+        <View style={grow ? styles.grow : undefined}>
           <TextInput
             mode="outlined"
             label={label}
@@ -166,5 +180,7 @@ const styles = StyleSheet.create({
   badge: { fontSize: fontSize.sm, fontWeight: '600' },
   err: { fontSize: fontSize.sm },
   btn: { minHeight: MIN_TOUCH_TARGET },
+  grow: { flex: 1 },
+  fill: { flex: 1 },
   options: { borderWidth: 1, borderRadius: spacing.sm, padding: spacing.xs },
 });

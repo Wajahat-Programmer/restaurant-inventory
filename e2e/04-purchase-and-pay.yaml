@@ -1,9 +1,9 @@
 appId: com.restaurantinventory
 name: Supplier, purchase on credit, partial payment, overpayment guard
 ---
-- runFlow: subflows/launch.yaml
+- runFlow: ../e2e-shared/launch.yaml
 - runFlow:
-    file: subflows/add-item.yaml
+    file: ../e2e-shared/add-item.yaml
     env:
       NAME: Rice
       QTY: "1"

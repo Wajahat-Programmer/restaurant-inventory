@@ -1,3 +1,5 @@
+appId: com.restaurantinventory
+---
 # env: NAME, QTY (opening qty in base units), COST (total rupees)
 - tapOn:
     id: "tab-stock"
@@ -6,9 +8,17 @@
 - tapOn:
     id: "field-name"
 - inputText: ${NAME}
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "field-openingQty"
 - tapOn:
     id: "field-openingQty"
 - inputText: ${QTY}
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "field-openingValue"
 - tapOn:
     id: "field-openingValue"
 - inputText: ${COST}

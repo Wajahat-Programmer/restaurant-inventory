@@ -1,11 +1,11 @@
 appId: com.restaurantinventory
 name: Add an item with opening stock
 ---
-- runFlow: subflows/launch.yaml
+- runFlow: ../e2e-shared/launch.yaml
 - assertVisible:
     id: "stock-empty"
 - runFlow:
-    file: subflows/add-item.yaml
+    file: ../e2e-shared/add-item.yaml
     env:
       NAME: Rice
       QTY: "2000"
