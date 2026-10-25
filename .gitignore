@@ -80,3 +80,6 @@ qa-report/
 
 # Graphify output (regenerate with: graphify update .)
 graphify-out/
+
+# signed release builds (never commit APKs)
+release/
