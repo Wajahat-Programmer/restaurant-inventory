@@ -19,7 +19,6 @@ import {
   openCountId,
   postCount,
   recordWaste,
-  setCounted,
   startCount,
 } from './stockService';
 
@@ -117,6 +116,17 @@ describe('items', () => {
     expect(await listItems(db, { search: '_' })).toHaveLength(0);
   });
 
+  it('locks the base unit once an item has stock history', async () => {
+    const used = await createItem(db, rice(), { qtyBase: 100, valuePaisa: 100 });
+    await expect(updateItem(db, used, { name: 'Rice', baseUnit: 'pcs' })).rejects.toThrow(
+      'cannot change',
+    );
+    expect((await getItem(db, used)).baseUnit).toBe('g');
+    const fresh = await createItem(db, { name: 'Tea', baseUnit: 'g' });
+    await updateItem(db, fresh, { name: 'Tea', baseUnit: 'ml' });
+    expect((await getItem(db, fresh)).baseUnit).toBe('ml');
+  });
+
   it('lists active items with their pack sizes', async () => {
     await createItem(db, rice({ packs: [{ packName: 'bag', factorToBase: 25000 }] }));
     const salt = await createItem(db, { name: 'Salt', baseUnit: 'g' });
@@ -170,6 +180,15 @@ describe('purchases', () => {
       ['Al-Noor Traders', 20],
     ]);
     await expectCacheMatchesLedger();
+  });
+
+  it('drops a voided purchase from the price history', async () => {
+    const { itemId, a, b } = await setup();
+    await postPurchase(db, { supplierId: a, date: '2026-10-01', lines: [{ itemId, qtyBase: 1000, totalPaisa: 10000 }], paidPaisa: 0 });
+    const bad = await postPurchase(db, { supplierId: b, date: '2026-10-02', lines: [{ itemId, qtyBase: 1000, totalPaisa: 99000 }], paidPaisa: 0 });
+    expect((await getItem(db, itemId)).prices.map(p => p.supplierName)).toEqual(['City Wholesale', 'Al-Noor Traders']);
+    await voidPurchase(db, bad);
+    expect((await getItem(db, itemId)).prices.map(p => p.supplierName)).toEqual(['Al-Noor Traders']);
   });
 
   it('tracks supplier dues, partial payments and rejects overpayment', async () => {
@@ -326,11 +345,13 @@ describe('stock count', () => {
 
     const lines = (await getCount(db, countId)).lines;
     const lineOf = (itemId: number) => lines.find(l => l.itemId === itemId)!.lineId;
-    await setCounted(db, lineOf(a), 850); // live 900 -> -50
-    await setCounted(db, lineOf(b), 500); // no change
-    // c is not counted
-
-    expect(await postCount(db, countId)).toBe(1);
+    // c is not counted. a: live 900 -> -50. b: no change.
+    expect(
+      await postCount(db, countId, [
+        { lineId: lineOf(a), countedQty: 850 },
+        { lineId: lineOf(b), countedQty: 500 },
+      ]),
+    ).toBe(1);
     expect((await getItem(db, a)).qtyBase).toBe(850);
     expect((await getItem(db, a)).movements[0]).toMatchObject({
       type: 'COUNT',
@@ -342,7 +363,6 @@ describe('stock count', () => {
     expect(await openCountId(db)).toBeNull();
 
     await expect(postCount(db, countId)).rejects.toThrow('already posted');
-    await expect(setCounted(db, lineOf(a), 1)).rejects.toThrow('not open');
     await expectCacheMatchesLedger();
   });
 
@@ -350,9 +370,8 @@ describe('stock count', () => {
     const a = await createItem(db, rice(), { qtyBase: 1000, valuePaisa: 10000 });
     const countId = await startCount(db, '2026-10-25');
     const [line] = (await getCount(db, countId)).lines;
-    await setCounted(db, line.lineId, 1100);
+    await postCount(db, countId, [{ lineId: line.lineId, countedQty: 1100 }]);
     expect((await getCount(db, countId)).lines[0].variance).toBe(100);
-    await postCount(db, countId);
     expect(await getItem(db, a)).toMatchObject({ qtyBase: 1100, valuePaisa: 11000 });
   });
 
@@ -391,10 +410,14 @@ describe('stock count', () => {
     const countId = await startCount(db, '2026-10-25');
     await expect(postCount(db, countId)).rejects.toThrow('at least one item');
     const [line] = (await getCount(db, countId)).lines;
-    await expect(setCounted(db, line.lineId, -1)).rejects.toThrow('negative');
-    await setCounted(db, line.lineId, 5);
-    await setCounted(db, line.lineId, null); // un-count
-    expect((await getCount(db, countId)).lines[0].countedQty).toBeNull();
+    await expect(
+      postCount(db, countId, [{ lineId: line.lineId, countedQty: -1 }]),
+    ).rejects.toThrow('negative');
+    // Clearing a line counts as not counted.
+    await expect(
+      postCount(db, countId, [{ lineId: line.lineId, countedQty: null }]),
+    ).rejects.toThrow('at least one item');
+    expect((await getCount(db, countId)).status).toBe('OPEN');
   });
 });
 

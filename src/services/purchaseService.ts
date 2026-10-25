@@ -66,41 +66,57 @@ export async function updateSupplier(
   }
 }
 
-/** Total owed to a supplier: opening balance + posted purchases - all payments. */
-async function dueFor(q: Queryable, supplierId: number): Promise<number> {
-  const [s] = await q.select().from(suppliers).where(eq(suppliers.id, supplierId));
-  must(s, 'Supplier not found');
-  const [p] = await q
+/** What each supplier is owed: opening balance + posted purchases - all payments. */
+async function duesBySupplier(q: Queryable): Promise<Map<number, number>> {
+  const sums = await q
     .select({
-      total: sql<number>`coalesce(sum(${purchases.totalPaisa}), 0)`,
-      paid: sql<number>`coalesce(sum(${purchases.paidPaisa}), 0)`,
+      supplierId: purchases.supplierId,
+      total: sql<number>`sum(${purchases.totalPaisa})`,
+      paid: sql<number>`sum(${purchases.paidPaisa})`,
     })
     .from(purchases)
-    .where(and(eq(purchases.supplierId, supplierId), eq(purchases.status, 'POSTED')));
-  const [pay] = await q
-    .select({ paid: sql<number>`coalesce(sum(${supplierPayments.amountPaisa}), 0)` })
+    .where(eq(purchases.status, 'POSTED'))
+    .groupBy(purchases.supplierId);
+  const pays = await q
+    .select({
+      supplierId: supplierPayments.supplierId,
+      paid: sql<number>`sum(${supplierPayments.amountPaisa})`,
+    })
     .from(supplierPayments)
-    .where(eq(supplierPayments.supplierId, supplierId));
-  return supplierDue({
-    openingBalancePaisa: s.openingBalancePaisa,
-    purchasesTotalPaisa: p.total,
-    paidPaisa: p.paid + pay.paid,
-  });
+    .groupBy(supplierPayments.supplierId);
+  const rows = await q.select().from(suppliers);
+
+  return new Map(
+    rows.map(s => [
+      s.id,
+      supplierDue({
+        openingBalancePaisa: s.openingBalancePaisa,
+        purchasesTotalPaisa: sums.find(x => x.supplierId === s.id)?.total ?? 0,
+        paidPaisa:
+          (sums.find(x => x.supplierId === s.id)?.paid ?? 0) +
+          (pays.find(x => x.supplierId === s.id)?.paid ?? 0),
+      }),
+    ]),
+  );
+}
+
+async function dueFor(q: Queryable, supplierId: number): Promise<number> {
+  const due = (await duesBySupplier(q)).get(supplierId);
+  return must(due, 'Supplier not found');
 }
 
 export async function listSuppliers(db: Queryable): Promise<SupplierRow[]> {
-  const rows = await db.select().from(suppliers).orderBy(suppliers.name);
-  const out: SupplierRow[] = [];
-  for (const s of rows) {
-    out.push({
-      id: s.id,
-      name: s.name,
-      phone: s.phone,
-      isActive: s.isActive,
-      duePaisa: await dueFor(db, s.id),
-    });
-  }
-  return out;
+  const [rows, dues] = await Promise.all([
+    db.select().from(suppliers).orderBy(suppliers.name),
+    duesBySupplier(db),
+  ]);
+  return rows.map(s => ({
+    id: s.id,
+    name: s.name,
+    phone: s.phone,
+    isActive: s.isActive,
+    duePaisa: dues.get(s.id) ?? 0,
+  }));
 }
 
 export interface PurchaseLineInput {
@@ -177,6 +193,7 @@ export async function postPurchase(
         supplierId: input.supplierId,
         pricePerBase: pricePerBase(l.totalPaisa, l.qtyBase),
         effectiveDate: input.date,
+        purchaseId: p.id,
       });
     }
     return p.id;

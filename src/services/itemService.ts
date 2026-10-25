@@ -1,4 +1,4 @@
-import { and, desc, eq, like, or, sql } from 'drizzle-orm';
+import { and, desc, eq, isNull, like, or, sql } from 'drizzle-orm';
 import { Db, inTransaction, Queryable, schema, Tx } from '../db/client';
 import { avgCost } from '../domain/ledger';
 import {
@@ -108,6 +108,23 @@ export async function updateItem(
   const data = parseItem(input);
   try {
     await inTransaction(db, async tx => {
+      const [cur] = await tx
+        .select({ baseUnit: items.baseUnit })
+        .from(items)
+        .where(eq(items.id, id));
+      must(cur, 'Item not found');
+      if (cur.baseUnit !== data.baseUnit) {
+        const [used] = await tx
+          .select({ id: schema.stockMovements.id })
+          .from(schema.stockMovements)
+          .where(eq(schema.stockMovements.itemId, id))
+          .limit(1);
+        if (used) {
+          throw new ValidationError(
+            'The base unit cannot change once an item has stock history',
+          );
+        }
+      }
       const res = await tx
         .update(items)
         .set({
@@ -257,7 +274,14 @@ export async function getItem(db: Queryable, id: number): Promise<ItemDetail> {
     })
     .from(schema.itemPrices)
     .innerJoin(schema.suppliers, eq(schema.suppliers.id, schema.itemPrices.supplierId))
-    .where(eq(schema.itemPrices.itemId, id))
+    .leftJoin(schema.purchases, eq(schema.purchases.id, schema.itemPrices.purchaseId))
+    .where(
+      and(
+        eq(schema.itemPrices.itemId, id),
+        // Prices from voided purchases are not real prices.
+        or(isNull(schema.purchases.id), eq(schema.purchases.status, 'POSTED')),
+      ),
+    )
     .orderBy(desc(schema.itemPrices.effectiveDate), desc(schema.itemPrices.id));
   const seen = new Set<number>();
   const prices = history.filter(p => !seen.has(p.supplierId) && seen.add(p.supplierId));

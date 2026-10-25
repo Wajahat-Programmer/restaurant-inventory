@@ -1,4 +1,5 @@
 import { sql } from 'drizzle-orm';
+import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { drizzle, SqliteRemoteDatabase } from 'drizzle-orm/sqlite-proxy';
 import { migrations } from './migrations.generated';
 import * as schema from './schema';
@@ -33,20 +34,27 @@ export function createDb(exec: SqlExecutor): Db {
   );
 }
 
+/** Bookkeeping table, kept out of schema.ts so drizzle-kit never migrates it. */
+const appliedMigrations = sqliteTable('__migrations', {
+  tag: text('tag').primaryKey(),
+  appliedAt: integer('applied_at').notNull(),
+});
+
 /**
  * Applies pending migrations in order, each in its own transaction, recording
  * them in __migrations. Safe to call on every launch.
  */
-export async function migrate(db: Db): Promise<void> {
+export async function migrate(db: Db, upTo = migrations.length): Promise<void> {
   await db.run(
     sql`create table if not exists __migrations (tag text primary key, applied_at integer not null)`,
   );
+  // Typed select, not db.all(): the proxy driver returns raw arrays for the latter.
   const done = new Set(
-    (await db.all<{ tag: string }>(sql`select tag from __migrations`)).map(
+    (await db.select({ tag: appliedMigrations.tag }).from(appliedMigrations)).map(
       r => r.tag,
     ),
   );
-  for (const m of migrations) {
+  for (const m of migrations.slice(0, upTo)) {
     if (done.has(m.tag)) {
       continue;
     }
@@ -54,9 +62,9 @@ export async function migrate(db: Db): Promise<void> {
       for (const stmt of m.statements) {
         await tx.run(sql.raw(stmt));
       }
-      await tx.run(
-        sql`insert into __migrations (tag, applied_at) values (${m.tag}, ${Date.now()})`,
-      );
+      await tx
+        .insert(appliedMigrations)
+        .values({ tag: m.tag, appliedAt: Date.now() });
     });
   }
 }

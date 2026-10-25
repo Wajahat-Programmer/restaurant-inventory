@@ -1,0 +1,26 @@
+appId: com.restaurantinventory
+name: Data survives closing and reopening the app
+---
+- runFlow: ../e2e-shared/launch.yaml
+- runFlow:
+    file: ../e2e-shared/add-item.yaml
+    env:
+      NAME: Rice
+      QTY: "2000"
+      COST: "400"
+- assertVisible: "2 kg"
+# Close and reopen WITHOUT clearing state: migrations run again on an
+# existing database, and the data must still be there.
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "item-Rice"
+    timeout: 120000
+- assertVisible: "2 kg"
+- assertVisible: "Rs 400.00"
+- tapOn:
+    id: "item-Rice"
+- assertVisible:
+    id: "detail-qty"
+    text: "2 kg"

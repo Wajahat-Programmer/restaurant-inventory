@@ -116,25 +116,6 @@ export async function startCount(db: Db, date: string): Promise<number> {
   });
 }
 
-export async function setCounted(
-  db: Db,
-  lineId: number,
-  countedQty: number | null,
-): Promise<void> {
-  if (countedQty !== null && (!(countedQty >= 0) || !Number.isFinite(countedQty))) {
-    throw new ValidationError('Counted quantity cannot be negative');
-  }
-  const [line] = await db
-    .select({ id: schema.countLines.id, status: schema.stockCounts.status })
-    .from(schema.countLines)
-    .innerJoin(schema.stockCounts, eq(schema.stockCounts.id, schema.countLines.countId))
-    .where(eq(schema.countLines.id, lineId));
-  if (!line || line.status !== 'OPEN') {
-    throw new ValidationError('This count line is not open');
-  }
-  await db.update(schema.countLines).set({ countedQty }).where(eq(schema.countLines.id, lineId));
-}
-
 export async function getCount(
   db: Queryable,
   countId: number,

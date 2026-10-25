@@ -26,5 +26,11 @@ export const migrations: { tag: string; statements: string[] }[] = [
       "CREATE TABLE `unit_conversions` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`item_id` integer NOT NULL,\n\t`pack_name` text NOT NULL,\n\t`factor_to_base` real NOT NULL,\n\tFOREIGN KEY (`item_id`) REFERENCES `items`(`id`) ON UPDATE no action ON DELETE no action\n);",
       "CREATE UNIQUE INDEX `unit_conv_item_pack` ON `unit_conversions` (`item_id`,`pack_name`);"
     ]
+  },
+  {
+    "tag": "0001_charming_amazoness",
+    "statements": [
+      "ALTER TABLE `item_prices` ADD `purchase_id` integer REFERENCES purchases(id);"
+    ]
   }
 ];

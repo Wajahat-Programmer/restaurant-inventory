@@ -86,6 +86,8 @@ export const itemPrices = sqliteTable(
     /** Display only: total / qty can be fractional paisa per base unit. */
     pricePerBase: real('price_per_base').notNull(),
     effectiveDate: text('effective_date').notNull(),
+    /** Lets a voided purchase drop out of the price history. */
+    purchaseId: integer('purchase_id').references(() => purchases.id),
   },
   t => [index('item_prices_item').on(t.itemId, t.effectiveDate)],
 );

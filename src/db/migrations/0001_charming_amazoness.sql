@@ -1,0 +1,1 @@
+ALTER TABLE `item_prices` ADD `purchase_id` integer REFERENCES purchases(id);
