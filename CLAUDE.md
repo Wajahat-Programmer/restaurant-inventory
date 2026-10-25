@@ -3,19 +3,20 @@
 Offline-only Android app for a small food business: stock, costs, in/out, forecasts. Spec: `Restaurant Inventory App — Development Plan.md` (Downloads). Feature specs live in `specs/`.
 
 ## Stack
-React Native CLI 0.88 (bare, TypeScript strict, New Architecture, Hermes), Android only. Planned (not installed yet): op-sqlite + Drizzle, React Navigation, React Native Paper, Zustand, React Hook Form + Zod, FlashList, Notifee. Testing: Jest, React Native Testing Library, Maestro.
+React Native CLI 0.88 (bare, TypeScript strict, New Architecture, Hermes), Android only. Installed: op-sqlite + Drizzle (sqlite-proxy driver), React Navigation, React Native Paper, Zustand, React Hook Form + Zod, FlashList. Not yet installed: vision-camera, image-resizer, Notifee, Victory. Testing: Jest, React Native Testing Library, Maestro.
 
 **No new dependency without asking.**
 
 ## Layout
 ```
-app/                    screens + navigation
-src/domain/             pure TS: ledger, costing, finance, forecast (NO react / react-native imports; ESLint enforces)
-src/db/                 Drizzle schema, migrations, repositories (not yet created)
-src/features/<module>/  components, hooks, forms per module
+app/navigation/         stacks + tabs; app/screens/ one file per screen
+src/domain/             pure TS: ledger, units, purchasing, stock status, photos, schemas (NO react / react-native imports; ESLint enforces)
+src/db/                 schema.ts, migrations/ (drizzle-kit), client.ts (proxy driver, migrate, inTransaction), opsqlite.ts (the only native import), testing.ts (better-sqlite3)
+src/services/           every write: one transaction each, all stock changes via ledgerService.postMovement
+src/features/           hooks (useQuery/useWrite), shared ui, form schemas per module
 src/theme/tokens.ts     the only place colours live (ESLint blocks raw hex elsewhere)
 specs/                  one spec per feature
-e2e/                    Maestro flows
+e2e/                    Maestro flows (top level only); e2e-shared/ helper flows
 ```
 
 ## Data rules
@@ -31,6 +32,16 @@ e2e/                    Maestro flows
 - 8 dp grid, touch targets >= 48 dp (`MIN_TOUCH_TARGET`), tabular figures for money and quantities.
 - Every interactive/asserted element gets a `testID` (used by Jest and Maestro).
 
+## Gotchas (each cost real time)
+- Through the proxy driver `db.all(sql...)` returns raw arrays, not objects. Use typed `db.select()`; `migrate()` was broken by this.
+- Drizzle's own op-sqlite driver does not await transaction callbacks. Always write via `inTransaction(db, tx => ...)`.
+- Schema change = `npm run db:generate` (new migration + bundled `migrations.generated.ts`); CI fails on drift. Never edit a shipped migration.
+- Hermes mis-binds large destructured parameter lists in `@react-navigation/*` (render-time ReferenceError). `babel.config.js` compiles that away for that package only.
+- Edge-to-edge Android does not resize for the keyboard: screens use `Body` (KeyboardAvoidingView).
+- RNTL 14: `render`, `fireEvent`, `unmount` are async; always `await`.
+- Restart Metro with `--reset-cache` after installing packages.
+- Every Maestro flow and subflow needs an `appId` header. A flow that always clears state cannot catch persistence bugs: keep `06-persistence`.
+
 ## Commands
 ```
 npm run typecheck      # tsc --noEmit
@@ -38,6 +49,7 @@ npm run lint           # eslint, zero warnings allowed
 npm test               # jest
 npm run test:coverage  # jest + >= 90% gate on src/domain
 npm run qa             # typecheck + lint + coverage (same as CI "static + unit")
+npm run db:generate    # after editing schema.ts
 npm run e2e            # maestro flows against a running emulator (debug build installed)
 npm run android        # build + install + run (see Windows notes)
 ```
