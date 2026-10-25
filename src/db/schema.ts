@@ -202,3 +202,94 @@ export const settings = sqliteTable('settings', {
   key: text('key').primaryKey(),
   value: text('value').notNull(),
 });
+
+/** A dish and its bill of materials. */
+export const recipes = sqliteTable('recipes', {
+  id: id(),
+  name: text('name').notNull().unique(),
+  sellPricePaisa: integer('sell_price_paisa').notNull(),
+  isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+  createdAt: createdAt(),
+});
+
+export const recipeLines = sqliteTable(
+  'recipe_lines',
+  {
+    id: id(),
+    recipeId: integer('recipe_id')
+      .notNull()
+      .references(() => recipes.id),
+    itemId: integer('item_id')
+      .notNull()
+      .references(() => items.id),
+    qtyBase: real('qty_base').notNull(),
+  },
+  t => [uniqueIndex('recipe_lines_unique').on(t.recipeId, t.itemId)],
+);
+
+/** One dish sold on one day. Posting deducts the ingredients (SALE movements). */
+export const sales = sqliteTable(
+  'sales',
+  {
+    id: id(),
+    date: text('date').notNull(),
+    recipeId: integer('recipe_id')
+      .notNull()
+      .references(() => recipes.id),
+    qty: integer('qty').notNull(),
+    /** Unit selling price when sold; later price changes do not rewrite history. */
+    pricePaisa: integer('price_paisa').notNull(),
+    /** Exact ingredient cost taken from stock at posting time. */
+    cogsPaisa: integer('cogs_paisa').notNull().default(0),
+    status: text('status', { enum: ['POSTED', 'VOID'] })
+      .notNull()
+      .default('POSTED'),
+    createdAt: createdAt(),
+  },
+  t => [index('sales_date').on(t.date)],
+);
+
+export const expenses = sqliteTable(
+  'expenses',
+  {
+    id: id(),
+    date: text('date').notNull(),
+    category: text('category', {
+      enum: ['rent', 'salaries', 'gas', 'utilities', 'maintenance', 'other'],
+    }).notNull(),
+    amountPaisa: integer('amount_paisa').notNull(),
+    method: text('method', { enum: ['cash', 'bank', 'other'] })
+      .notNull()
+      .default('cash'),
+    note: text('note'),
+    status: text('status', { enum: ['POSTED', 'VOID'] })
+      .notNull()
+      .default('POSTED'),
+    createdAt: createdAt(),
+  },
+  t => [index('expenses_date').on(t.date)],
+);
+
+/** Money in and out. Append-only: a correction is an opposite-direction entry. */
+export const cashEntries = sqliteTable(
+  'cash_entries',
+  {
+    id: id(),
+    date: text('date').notNull(),
+    direction: text('direction', { enum: ['IN', 'OUT'] }).notNull(),
+    amountPaisa: integer('amount_paisa').notNull(),
+    source: text('source', {
+      enum: ['sale', 'expense', 'purchase', 'supplier_payment', 'manual'],
+    }).notNull(),
+    refId: integer('ref_id'),
+    method: text('method', { enum: ['cash', 'bank', 'other'] })
+      .notNull()
+      .default('cash'),
+    isReversal: integer('is_reversal', { mode: 'boolean' })
+      .notNull()
+      .default(false),
+    note: text('note'),
+    createdAt: createdAt(),
+  },
+  t => [index('cash_date').on(t.date)],
+);

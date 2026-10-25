@@ -15,6 +15,13 @@
       "when": 1792937107264,
       "tag": "0001_charming_amazoness",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1792943522467,
+      "tag": "0002_gray_forge",
+      "breakpoints": true
     }
   ]
 }

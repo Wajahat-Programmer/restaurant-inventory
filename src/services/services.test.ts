@@ -1,7 +1,6 @@
-import { asc, eq } from 'drizzle-orm';
 import { Db, schema } from '../db/client';
 import { createTestDb } from '../db/testing';
-import { PostedMovement, replay } from '../domain/ledger';
+import { findCacheMismatches } from './ledgerInvariant';
 import { createItem, getItem, listItemPacks, listItems, setItemActive, updateItem } from './itemService';
 import { attachPhoto, deletePhoto, listPhotos, setPrimaryPhoto } from './photoService';
 import {
@@ -27,27 +26,7 @@ beforeEach(async () => {
   db = await createTestDb();
 });
 
-/** The cache must always equal a replay of the append-only ledger. */
-async function expectCacheMatchesLedger() {
-  const levels = await db.select().from(schema.stockLevels);
-  for (const lvl of levels) {
-    const rows = await db
-      .select()
-      .from(schema.stockMovements)
-      .where(eq(schema.stockMovements.itemId, lvl.itemId))
-      .orderBy(asc(schema.stockMovements.id));
-    const movs: PostedMovement[] = rows.map(r => ({
-      itemId: r.itemId,
-      type: r.type,
-      qtyBase: r.qtyBase,
-      valuePaisa: r.valuePaisa,
-      isReversal: r.isReversal,
-    }));
-    expect({ qtyBase: lvl.qtyBase, valuePaisa: lvl.valuePaisa }).toEqual(
-      replay(movs),
-    );
-  }
-}
+const expectCacheMatchesLedger = async () => expect(await findCacheMismatches(db)).toEqual([]);
 
 const rice = (extra = {}) => ({ name: 'Rice', baseUnit: 'g' as const, ...extra });
 
@@ -187,7 +166,7 @@ describe('purchases', () => {
     await postPurchase(db, { supplierId: a, date: '2026-10-01', lines: [{ itemId, qtyBase: 1000, totalPaisa: 10000 }], paidPaisa: 0 });
     const bad = await postPurchase(db, { supplierId: b, date: '2026-10-02', lines: [{ itemId, qtyBase: 1000, totalPaisa: 99000 }], paidPaisa: 0 });
     expect((await getItem(db, itemId)).prices.map(p => p.supplierName)).toEqual(['City Wholesale', 'Al-Noor Traders']);
-    await voidPurchase(db, bad);
+    await voidPurchase(db, bad, '2026-10-03');
     expect((await getItem(db, itemId)).prices.map(p => p.supplierName)).toEqual(['Al-Noor Traders']);
   });
 
@@ -266,7 +245,7 @@ describe('purchases', () => {
       lines: [{ itemId, qtyBase: 1000, totalPaisa: 10000 }],
       paidPaisa: 0,
     });
-    await voidPurchase(db, p);
+    await voidPurchase(db, p, '2026-10-03');
     expect((await getItem(db, itemId)).qtyBase).toBe(0);
     expect((await listPurchases(db))[0].status).toBe('VOID');
     expect((await listSuppliers(db))[0].duePaisa).toBe(0);
@@ -275,7 +254,7 @@ describe('purchases', () => {
       ['IN', 1000, false],
       ['IN', -1000, true],
     ]);
-    await expect(voidPurchase(db, p)).rejects.toThrow('already void');
+    await expect(voidPurchase(db, p, '2026-10-03')).rejects.toThrow('already void');
 
     const p2 = await postPurchase(db, {
       supplierId: a,
@@ -284,7 +263,7 @@ describe('purchases', () => {
       paidPaisa: 0,
     });
     await issueToKitchen(db, { itemId, qtyBase: 600 });
-    await expect(voidPurchase(db, p2)).rejects.toThrow('Insufficient stock');
+    await expect(voidPurchase(db, p2, '2026-10-03')).rejects.toThrow('Insufficient stock');
     expect((await listPurchases(db))[0].status).toBe('POSTED');
     expect((await getItem(db, itemId)).qtyBase).toBe(400);
     await expectCacheMatchesLedger();

@@ -7,8 +7,9 @@ import {
   pricePerBase,
   supplierDue,
 } from '../domain/purchasing';
-import { SupplierInput, supplierInputSchema } from '../domain/schemas';
+import { dateSchema, SupplierInput, supplierInputSchema } from '../domain/schemas';
 import { friendly, must, ValidationError } from './errors';
+import { postCash, reverseCash } from './cashService';
 import { postMovement, reverseMovement } from './ledgerService';
 
 const { suppliers, purchases, purchaseLines, supplierPayments, itemPrices } =
@@ -196,6 +197,13 @@ export async function postPurchase(
         purchaseId: p.id,
       });
     }
+    await postCash(tx, {
+      date: input.date,
+      direction: 'OUT',
+      amountPaisa: input.paidPaisa,
+      source: 'purchase',
+      refId: p.id,
+    });
     return p.id;
   });
 }
@@ -204,7 +212,16 @@ export async function postPurchase(
  * Voids a purchase with reversing entries. Fails, changing nothing, if any of
  * its stock has already been used.
  */
-export async function voidPurchase(db: Db, purchaseId: number): Promise<void> {
+export async function voidPurchase(
+  db: Db,
+  purchaseId: number,
+  /** The day the void happens; its cash reversal is dated then, not back-dated. */
+  date: string,
+): Promise<void> {
+  const d = dateSchema.safeParse(date);
+  if (!d.success) {
+    throw new ValidationError(d.error.issues[0].message);
+  }
   await inTransaction(db, async tx => {
     const [p] = await tx.select().from(purchases).where(eq(purchases.id, purchaseId));
     must(p, 'Purchase not found');
@@ -225,6 +242,7 @@ export async function voidPurchase(db: Db, purchaseId: number): Promise<void> {
     for (const m of movs.sort((a, b) => b.id - a.id)) {
       await reverseMovement(tx, m.id, { refType: 'purchase', refId: purchaseId });
     }
+    await reverseCash(tx, 'purchase', purchaseId, date, 'Purchase voided');
     await tx.update(purchases).set({ status: 'VOID' }).where(eq(purchases.id, purchaseId));
   });
 }
@@ -248,11 +266,22 @@ export async function recordPayment(db: Db, input: PaymentInput): Promise<void> 
     if (input.amountPaisa > due) {
       throw new ValidationError('Payment is more than what is owed');
     }
-    await tx.insert(supplierPayments).values({
-      supplierId: input.supplierId,
-      purchaseId: input.purchaseId ?? null,
+    const [pay] = await tx
+      .insert(supplierPayments)
+      .values({
+        supplierId: input.supplierId,
+        purchaseId: input.purchaseId ?? null,
+        date: input.date,
+        amountPaisa: input.amountPaisa,
+        method: input.method ?? 'cash',
+      })
+      .returning({ id: supplierPayments.id });
+    await postCash(tx, {
       date: input.date,
+      direction: 'OUT',
       amountPaisa: input.amountPaisa,
+      source: 'supplier_payment',
+      refId: pay.id,
       method: input.method ?? 'cash',
     });
   });

@@ -4,7 +4,7 @@ import { Card, FAB, Text } from 'react-native-paper';
 import { formatPKR } from '../../src/domain/money';
 import { formatQty } from '../../src/domain/units';
 import { useQuery, useWrite } from '../../src/features/data';
-import { Btn, ErrorText, useColors } from '../../src/features/ui';
+import { Btn, ErrorText, todayISO, useColors } from '../../src/features/ui';
 import { listItemPacks } from '../../src/services/itemService';
 import { listPurchases, voidPurchase } from '../../src/services/purchaseService';
 import { spacing } from '../../src/theme/tokens';
@@ -57,7 +57,7 @@ export default function PurchasesScreen({ navigation }: RootProps<'Tabs'>) {
                   textColor={c.danger}
                   onPress={async () => {
                     setError(null);
-                    const res = await write(db => voidPurchase(db, p.id));
+                    const res = await write(db => voidPurchase(db, p.id, todayISO()));
                     if (!res.ok) {
                       setError(res.error);
                     }

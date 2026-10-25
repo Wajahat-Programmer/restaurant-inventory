@@ -29,6 +29,33 @@ describe('migrations', () => {
     expect(await appliedTags(db)).toEqual(migrations.map(m => m.tag));
   });
 
+  it('backfills the cash book from purchases and payments made before it existed', async () => {
+    const db = await createTestDb(2); // schema as of M1
+    await db.run(sql`insert into suppliers (name) values ('Al-Noor')`);
+    await db.run(sql`insert into purchases (supplier_id, date, total_paisa, paid_paisa, status) values (1, '2026-10-01', 9000, 5000, 'POSTED')`);
+    await db.run(sql`insert into purchases (supplier_id, date, total_paisa, paid_paisa, status) values (1, '2026-10-02', 9000, 7000, 'VOID')`);
+    await db.run(sql`insert into purchases (supplier_id, date, total_paisa, paid_paisa, status) values (1, '2026-10-03', 9000, 0, 'POSTED')`);
+    await db.run(sql`insert into supplier_payments (supplier_id, date, amount_paisa, method) values (1, '2026-10-04', 300, 'bank')`);
+
+    await migrate(db);
+
+    const rows = await db
+      .select({
+        date: schema.cashEntries.date,
+        direction: schema.cashEntries.direction,
+        amount: schema.cashEntries.amountPaisa,
+        source: schema.cashEntries.source,
+        method: schema.cashEntries.method,
+      })
+      .from(schema.cashEntries)
+      .orderBy(schema.cashEntries.date);
+    // The voided and the unpaid purchase add nothing.
+    expect(rows).toEqual([
+      { date: '2026-10-01', direction: 'OUT', amount: 5000, source: 'purchase', method: 'cash' },
+      { date: '2026-10-04', direction: 'OUT', amount: 300, source: 'supplier_payment', method: 'bank' },
+    ]);
+  });
+
   it('is safe to run again and applies each migration once', async () => {
     const db = await createTestDb();
     await migrate(db);

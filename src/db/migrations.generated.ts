@@ -32,5 +32,22 @@ export const migrations: { tag: string; statements: string[] }[] = [
     "statements": [
       "ALTER TABLE `item_prices` ADD `purchase_id` integer REFERENCES purchases(id);"
     ]
+  },
+  {
+    "tag": "0002_gray_forge",
+    "statements": [
+      "CREATE TABLE `cash_entries` (\r\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\r\n\t`date` text NOT NULL,\r\n\t`direction` text NOT NULL,\r\n\t`amount_paisa` integer NOT NULL,\r\n\t`source` text NOT NULL,\r\n\t`ref_id` integer,\r\n\t`method` text DEFAULT 'cash' NOT NULL,\r\n\t`is_reversal` integer DEFAULT false NOT NULL,\r\n\t`note` text,\r\n\t`created_at` integer DEFAULT (unixepoch() * 1000) NOT NULL\r\n);",
+      "CREATE INDEX `cash_date` ON `cash_entries` (`date`);",
+      "CREATE TABLE `expenses` (\r\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\r\n\t`date` text NOT NULL,\r\n\t`category` text NOT NULL,\r\n\t`amount_paisa` integer NOT NULL,\r\n\t`method` text DEFAULT 'cash' NOT NULL,\r\n\t`note` text,\r\n\t`status` text DEFAULT 'POSTED' NOT NULL,\r\n\t`created_at` integer DEFAULT (unixepoch() * 1000) NOT NULL\r\n);",
+      "CREATE INDEX `expenses_date` ON `expenses` (`date`);",
+      "CREATE TABLE `recipe_lines` (\r\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\r\n\t`recipe_id` integer NOT NULL,\r\n\t`item_id` integer NOT NULL,\r\n\t`qty_base` real NOT NULL,\r\n\tFOREIGN KEY (`recipe_id`) REFERENCES `recipes`(`id`) ON UPDATE no action ON DELETE no action,\r\n\tFOREIGN KEY (`item_id`) REFERENCES `items`(`id`) ON UPDATE no action ON DELETE no action\r\n);",
+      "CREATE UNIQUE INDEX `recipe_lines_unique` ON `recipe_lines` (`recipe_id`,`item_id`);",
+      "CREATE TABLE `recipes` (\r\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\r\n\t`name` text NOT NULL,\r\n\t`sell_price_paisa` integer NOT NULL,\r\n\t`is_active` integer DEFAULT true NOT NULL,\r\n\t`created_at` integer DEFAULT (unixepoch() * 1000) NOT NULL\r\n);",
+      "CREATE UNIQUE INDEX `recipes_name_unique` ON `recipes` (`name`);",
+      "CREATE TABLE `sales` (\r\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\r\n\t`date` text NOT NULL,\r\n\t`recipe_id` integer NOT NULL,\r\n\t`qty` integer NOT NULL,\r\n\t`price_paisa` integer NOT NULL,\r\n\t`cogs_paisa` integer DEFAULT 0 NOT NULL,\r\n\t`status` text DEFAULT 'POSTED' NOT NULL,\r\n\t`created_at` integer DEFAULT (unixepoch() * 1000) NOT NULL,\r\n\tFOREIGN KEY (`recipe_id`) REFERENCES `recipes`(`id`) ON UPDATE no action ON DELETE no action\r\n);",
+      "CREATE INDEX `sales_date` ON `sales` (`date`);",
+      "-- Backfill: money already paid before the cash book existed.\r\nINSERT INTO `cash_entries` (`date`, `direction`, `amount_paisa`, `source`, `ref_id`, `method`, `created_at`)\r\nSELECT `date`, 'OUT', `paid_paisa`, 'purchase', `id`, 'cash', `created_at` FROM `purchases` WHERE `status` = 'POSTED' AND `paid_paisa` > 0;",
+      "INSERT INTO `cash_entries` (`date`, `direction`, `amount_paisa`, `source`, `ref_id`, `method`, `created_at`)\r\nSELECT `date`, 'OUT', `amount_paisa`, 'supplier_payment', `id`, `method`, `created_at` FROM `supplier_payments`;"
+    ]
   }
 ];
