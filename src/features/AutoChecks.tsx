@@ -6,6 +6,8 @@ import { alerts } from '../services/forecastService';
 import { getSetting, setSetting } from '../services/settingsService';
 import { loadBackupPassphrase, backupPorts } from './backup/devicePorts';
 import { backupStatus, runLocalBackup } from './backup/runBackup';
+import { driveConfigured, driveSyncPorts } from './drive/driveDevice';
+import { uploadLatestToDrive } from './drive/driveSync';
 import { useDbHost } from './DbProvider';
 import { notifyAlerts, notifyBackupFailing, notifyUpdate } from './notify/notify';
 import { installedVersion, timedFetch } from './update/devicePorts';
@@ -65,6 +67,10 @@ export function AutoChecks() {
           if (pass && backupDue(last ? Number(last) : null, Date.now())) {
             const version = (await installedVersion()) ?? '0.0.0';
             await runLocalBackup(db, backupPorts(version), handle, pass, today).catch(() => undefined);
+          }
+          if (driveConfigured() && (await getSetting(db, 'drive.enabled')) === '1') {
+            const version = (await installedVersion()) ?? '0.0.0';
+            await uploadLatestToDrive(db, driveSyncPorts(backupPorts(version)), today).catch(() => undefined);
           }
           if ((await backupStatus(db, Date.now())).failingTwoDays && (await getSetting(db, 'backup.warnedOn')) !== today) {
             await notifyBackupFailing();

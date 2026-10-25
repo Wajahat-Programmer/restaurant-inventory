@@ -407,3 +407,13 @@ describe('who did what', () => {
     expect(fireEvent).toBeDefined();
   });
 });
+
+describe('google drive', () => {
+  it('says plainly that Drive is not set up while there is no sign-in key', async () => {
+    await openApp(db, 'home');
+    await goMore('settings');
+    await press('open-data');
+    expect(await screen.findByTestId('drive-not-set-up')).toBeTruthy();
+    expect(screen.queryByTestId('drive-connect')).toBeNull();
+  });
+});

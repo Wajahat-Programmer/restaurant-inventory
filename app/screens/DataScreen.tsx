@@ -19,9 +19,13 @@ import {
   Preview,
   TEMPLATES,
 } from '../../src/features/importExport/csvImport';
+import { DriveFile, listDriveBackups } from '../../src/features/drive/driveClient';
+import { connectDrive, disconnectDrive, downloadFromDrive, driveAccessToken, driveConfigured, driveSyncPorts, fetchHttp } from '../../src/features/drive/driveDevice';
+import { uploadLatestToDrive } from '../../src/features/drive/driveSync';
 import { installedVersion } from '../../src/features/update/devicePorts';
 import { Body, Btn, ErrorText, Select, todayISO, useColors } from '../../src/features/ui';
 import { audit } from '../../src/services/auditService';
+import { getSetting, setSetting } from '../../src/services/settingsService';
 import { EXPORTS, ExportKind, exportCsv } from '../../src/services/exportService';
 import { existingNames, importItems, importRecipes, importSuppliers } from '../../src/services/importService';
 import { spacing } from '../../src/theme/tokens';
@@ -128,11 +132,14 @@ export default function DataScreen() {
   };
 
   /* ------------------------------ backup ------------------------------ */
+  const [driveTick, setDriveTick] = useState(0);
   const { data, error: loadError } = useQuery(async d => ({
     hasPass: !!(await loadBackupPassphrase()),
     status: await backupStatus(d, Date.now()),
     version: (await installedVersion()) ?? '0.0.0',
-  }));
+    driveAccount: await getSetting(d, 'drive.account'),
+    driveLastOkAt: await getSetting(d, 'drive.lastOkAt'),
+  }), [driveTick]);
   const [backups, setBackups] = useState<BackupInfo[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [pass1, setPass1] = useState('');
@@ -214,6 +221,79 @@ export default function DataScreen() {
     } catch (e) {
       fail(e);
     }
+  };
+
+  /* ----------------------------- google drive ----------------------------- */
+  const [driveFiles, setDriveFiles] = useState<DriveFile[]>([]);
+  const driveAccount = data?.driveAccount ?? '';
+
+  const driveConnect = async () => {
+    setError(null);
+    try {
+      const email = await connectDrive();
+      if (email) {
+        await setSetting(db, 'drive.account', email);
+        await setSetting(db, 'drive.enabled', '1');
+        await write(async d => audit(d, 'drive.connect', 'backup', null, { account: email }));
+        setDriveTick(t => t + 1);
+        setNote(`✓ Connected to Google Drive as ${email}. Backups are sent there daily.`);
+      }
+    } catch (e) {
+      fail(e);
+    }
+  };
+
+  const driveDisconnect = async () => {
+    try {
+      await disconnectDrive().catch(() => undefined);
+      await setSetting(db, 'drive.enabled', '0');
+      await setSetting(db, 'drive.account', '');
+      setDriveFiles([]);
+      setDriveTick(t => t + 1);
+      setNote('Google Drive disconnected. Copies already in Drive stay there.');
+    } catch (e) {
+      fail(e);
+    }
+  };
+
+  const driveSendNow = async () => {
+    setError(null);
+    setBusy('Sending to Google Drive…');
+    try {
+      const pass = await loadBackupPassphrase();
+      if (!pass || !handle) {
+        throw new Error('Set a backup passphrase first.');
+      }
+      await runLocalBackup(db, ports(), handle, pass, todayISO());
+      const sent = await uploadLatestToDrive(db, driveSyncPorts(ports()), todayISO());
+      setNote(sent ? `✓ ${sent} is now in Google Drive.` : '✓ Google Drive already has the latest backup.');
+      setDriveTick(t => t + 1);
+    } catch (e) {
+      fail(e);
+    }
+    setBusy(null);
+  };
+
+  const driveList = async () => {
+    setError(null);
+    try {
+      setDriveFiles(await listDriveBackups(fetchHttp, await driveAccessToken()));
+    } catch (e) {
+      fail(e);
+    }
+  };
+
+  const driveGet = async (f: DriveFile) => {
+    setError(null);
+    setBusy('Downloading from Google Drive…');
+    try {
+      await downloadFromDrive(f, `${ports().dirs.backups}/${f.name}`);
+      await refreshList();
+      setNote(`✓ ${f.name} was added to the list on this phone. Choose Restore on it.`);
+    } catch (e) {
+      fail(e);
+    }
+    setBusy(null);
   };
 
   return (
@@ -340,6 +420,47 @@ export default function DataScreen() {
           <Btn testID="restore-from-file" icon="folder-open" onPress={restoreFromFile}>
             Add a backup file from elsewhere
           </Btn>
+
+          <Text variant="titleSmall">Google Drive</Text>
+          {!driveConfigured() ? (
+            <Text testID="drive-not-set-up" style={{ color: c.textSecondary }}>
+              Google Drive backup is not set up in this build. It needs a Google Cloud sign-in key (see the manual, Backup chapter). Local backups work without it.
+            </Text>
+          ) : !driveAccount ? (
+            <>
+              <Text style={{ color: c.textSecondary }}>
+                Keep a second copy in your own Google Drive. It goes in a hidden app folder that only this app can see, still locked with your passphrase.
+              </Text>
+              <Btn testID="drive-connect" icon="google-drive" onPress={driveConnect}>
+                Connect Google Drive
+              </Btn>
+            </>
+          ) : (
+            <>
+              <Text testID="drive-account">{`✓ Connected: ${driveAccount}`}</Text>
+              <Text testID="drive-last">
+                {data?.driveLastOkAt ? `Last copy sent: ${stamp(Number(data.driveLastOkAt))}` : 'Nothing sent to Drive yet.'}
+              </Text>
+              <Btn testID="drive-send" icon="cloud-upload" disabled={!!busy} onPress={driveSendNow}>
+                Send a backup to Drive now
+              </Btn>
+              <Btn testID="drive-list" icon="refresh" onPress={driveList}>
+                Show backups in Drive
+              </Btn>
+              {driveFiles.map(f => (
+                <View key={f.id} style={styles.row} testID={`drive-file-${f.name}`}>
+                  <View style={styles.flex}>
+                    <Text>{f.name}</Text>
+                    <Text style={{ color: c.textSecondary }}>{mb(f.sizeBytes)}</Text>
+                  </View>
+                  <Btn disabled={!!busy} onPress={() => driveGet(f)}>Download</Btn>
+                </View>
+              ))}
+              <Btn testID="drive-disconnect" textColor={c.danger} onPress={driveDisconnect}>
+                Disconnect Google Drive
+              </Btn>
+            </>
+          )}
 
           {restoring && (
             <View style={[styles.gap, styles.warn, { borderColor: c.danger }]} testID="restore-panel">

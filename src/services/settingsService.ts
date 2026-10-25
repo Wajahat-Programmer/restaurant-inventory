@@ -18,6 +18,7 @@ export const SETTING_DEFAULTS = {
   'backup.passphraseSet': '0',
   'drive.enabled': '0',
   'drive.account': '',
+  'drive.lastOkAt': '',
   'alerts.lastNotified': '',
   'backup.warnedOn': '',
 } as const;
