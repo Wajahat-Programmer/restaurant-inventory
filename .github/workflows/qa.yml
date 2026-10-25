@@ -94,6 +94,7 @@ jobs:
             nohup npx react-native start > metro.log 2>&1 &
             adb reverse tcp:8081 tcp:8081
             until curl -s localhost:8081/status | grep -q running; do sleep 2; done
+            mkdir -p qa-report
             maestro test e2e --format junit --output qa-report/e2e.xml
       - uses: actions/upload-artifact@v4
         if: always()

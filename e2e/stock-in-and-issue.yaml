@@ -3,7 +3,10 @@ name: Stock in, issue, and over-issue guard
 ---
 - launchApp:
     clearState: true
-- assertVisible: "Restaurant Inventory"
+# Debug builds fetch the JS bundle from Metro on first launch; allow for it.
+- extendedWaitUntil:
+    visible: "Restaurant Inventory"
+    timeout: 90000
 - assertVisible:
     id: "stock-qty"
     text: "0 g"
