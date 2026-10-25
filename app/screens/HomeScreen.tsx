@@ -34,7 +34,7 @@ export default function HomeScreen() {
             label="Profit after expenses"
             strong
             tone={(d?.today.netProfit ?? 0) < 0 ? 'bad' : 'good'}
-            value={formatPKR(d?.today.netProfit ?? 0)}
+            value={`${(d?.today.netProfit ?? 0) < 0 ? '✖ ' : '✓ '}${formatPKR(d?.today.netProfit ?? 0)}`}
           />
         </Card.Content>
       </Card>
@@ -51,7 +51,7 @@ export default function HomeScreen() {
             label="Net profit"
             strong
             tone={(d?.month.netProfit ?? 0) < 0 ? 'bad' : 'good'}
-            value={formatPKR(d?.month.netProfit ?? 0)}
+            value={`${(d?.month.netProfit ?? 0) < 0 ? '✖ ' : '✓ '}${formatPKR(d?.month.netProfit ?? 0)}`}
           />
         </Card.Content>
       </Card>

@@ -1,0 +1,51 @@
+appId: com.restaurantinventory
+name: Expense, cash book and profit and loss
+---
+- runFlow: ../e2e-shared/launch.yaml
+- tapOn:
+    id: "tab-home"
+- tapOn:
+    id: "home-add-expense"
+- tapOn:
+    id: "category-rent"
+- tapOn:
+    id: "field-expense-amount"
+- inputText: "30000"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "save-expense"
+- tapOn:
+    id: "save-expense"
+- runFlow:
+    file: ../e2e-shared/goto-more.yaml
+    env:
+      DEST: expenses
+- assertVisible:
+    id: "expenses-total"
+    text: "Rs 30,000.00"
+- back
+- runFlow:
+    file: ../e2e-shared/goto-more.yaml
+    env:
+      DEST: cashbook
+- assertVisible:
+    id: "cash-closing"
+    text: "-Rs 30,000.00"
+- back
+- runFlow:
+    file: ../e2e-shared/goto-more.yaml
+    env:
+      DEST: reports
+- assertVisible:
+    id: "pnl-expenses"
+    text: "Rs 30,000.00"
+- assertVisible:
+    id: "pnl-net"
+    text: "✖ -Rs 30,000.00"
+- back
+- tapOn:
+    id: "tab-home"
+- assertVisible:
+    id: "home-cash"
+    text: "-Rs 30,000.00"

@@ -122,7 +122,7 @@ export default function RecipeFormScreen({ navigation, route }: RootProps<'Recip
             label="Margin"
             strong
             tone={preview.marginPaisa !== null && preview.marginPaisa < 0 ? 'bad' : 'good'}
-            value={preview.marginPaisa === null ? '—' : `${formatPKR(preview.marginPaisa)} (${formatPct(preview.marginPct)})`}
+            value={preview.marginPaisa === null ? '—' : `${preview.marginPaisa < 0 ? '✖' : '✓'} ${formatPKR(preview.marginPaisa)} (${formatPct(preview.marginPct)})`}
           />
         </Card.Content>
       </Card>

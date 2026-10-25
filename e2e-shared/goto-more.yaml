@@ -1,0 +1,7 @@
+appId: com.restaurantinventory
+---
+# env: DEST = reports | recipes | expenses | cashbook | suppliers | count
+- tapOn:
+    id: "tab-more"
+- tapOn:
+    id: "menu-${DEST}"

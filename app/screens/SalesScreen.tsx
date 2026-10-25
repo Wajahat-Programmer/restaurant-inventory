@@ -31,7 +31,12 @@ export default function SalesScreen() {
           <Card.Content>
             <Line testID="sales-revenue" label={`Sales (${portions} portions)`} strong value={formatPKR(revenue)} />
             <Line testID="sales-cogs" label="Ingredient cost" value={formatPKR(cogs)} />
-            <Line label="Gross profit" tone={revenue - cogs < 0 ? 'bad' : 'good'} value={formatPKR(revenue - cogs)} />
+            <Line
+              testID="sales-gross"
+              label="Gross profit"
+              tone={revenue - cogs < 0 ? 'bad' : 'good'}
+              value={`${revenue - cogs < 0 ? '✖ ' : '✓ '}${formatPKR(revenue - cogs)}`}
+            />
           </Card.Content>
         </Card>
         <ErrorText message={error ?? loadError} />

@@ -3,6 +3,8 @@ name: Form validation keeps the form open and explains the problem
 ---
 - runFlow: ../e2e-shared/launch.yaml
 - tapOn:
+    id: "tab-stock"
+- tapOn:
     id: "fab-add-item"
 - scrollUntilVisible:
     element:

@@ -67,7 +67,7 @@ describe('recipes', () => {
     await type('ingredient-1-qty', '20');
     // 250 g x 10 + 20 ml x 20 = Rs 29.00 cost against Rs 300.00.
     expect(text('recipe-cost')).toBe('Rs 29.00');
-    expect(text('recipe-margin')).toMatch(/Rs 271\.00 \(90\.3%\)/);
+    expect(text('recipe-margin')).toMatch(/✓ Rs 271\.00 \(90\.3%\)/);
     await press('save-recipe');
     expect(await screen.findByTestId('recipe-Biryani')).toBeTruthy();
     const [b] = (await listRecipes(db)).filter(r => r.name === 'Biryani');
@@ -240,7 +240,7 @@ describe('reports and dashboard', () => {
     await trading();
     await openApp(db, 'home');
     await waitFor(() => expect(text('home-today-revenue')).toBe('Rs 1,500.00'));
-    expect(text('home-today-net')).toBe('Rs 930.00');
+    expect(text('home-today-net')).toBe('✓ Rs 930.00');
     expect(text('home-month-revenue')).toBe('Rs 1,500.00');
     // 140,000 bought, 150,000 sold, 30,000 rent: Rs -200.00 in the cash book.
     expect(text('home-cash')).toBe('-Rs 200.00');

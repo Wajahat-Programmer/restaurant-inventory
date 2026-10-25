@@ -2,6 +2,8 @@ appId: com.restaurantinventory
 name: Add an item with opening stock
 ---
 - runFlow: ../e2e-shared/launch.yaml
+- tapOn:
+    id: "tab-stock"
 - assertVisible:
     id: "stock-empty"
 - runFlow:

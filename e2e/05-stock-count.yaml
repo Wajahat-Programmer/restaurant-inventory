@@ -8,8 +8,10 @@ name: Stock count shows variance and posts an adjustment
       NAME: Rice
       QTY: "1000"
       COST: "100"
-- tapOn:
-    id: "tab-count"
+- runFlow:
+    file: ../e2e-shared/goto-more.yaml
+    env:
+      DEST: count
 - tapOn:
     id: "start-count"
 - tapOn:
@@ -20,6 +22,7 @@ name: Stock count shows variance and posts an adjustment
 - tapOn:
     id: "post-count"
 - assertVisible: "✓ Count posted: 1 item adjusted."
+- back
 - tapOn:
     id: "tab-stock"
 - tapOn:

@@ -1,0 +1,109 @@
+appId: com.restaurantinventory
+name: Dish with a recipe, daily sales, stock deduction, shortage guard, void
+---
+- runFlow: ../e2e-shared/launch.yaml
+# Rice: 10 kg for Rs 1,000.
+- runFlow:
+    file: ../e2e-shared/add-item.yaml
+    env:
+      NAME: Rice
+      QTY: "10000"
+      COST: "1000"
+- runFlow:
+    file: ../e2e-shared/goto-more.yaml
+    env:
+      DEST: recipes
+- assertVisible:
+    id: "recipes-empty"
+- tapOn:
+    id: "fab-add-recipe"
+- tapOn:
+    id: "field-recipe-name"
+- inputText: Pulao
+- tapOn:
+    id: "field-recipe-price"
+- inputText: "150"
+- hideKeyboard
+- tapOn:
+    id: "ingredient-0-item"
+- tapOn:
+    id: "ingredient-0-item-Rice"
+- tapOn:
+    id: "ingredient-0-qty"
+- inputText: "200"
+- hideKeyboard
+# 200 g at 10 paisa/g = Rs 20 cost against Rs 150.
+- assertVisible:
+    id: "recipe-cost"
+    text: "Rs 20.00"
+- scrollUntilVisible:
+    element:
+      id: "save-recipe"
+- tapOn:
+    id: "save-recipe"
+- assertVisible:
+    id: "recipe-Pulao"
+- back
+- tapOn:
+    id: "tab-sales"
+- assertVisible:
+    id: "sales-empty"
+- tapOn:
+    id: "fab-add-sales"
+- tapOn:
+    id: "sale-line-0-dish"
+- tapOn:
+    id: "sale-line-0-dish-Pulao"
+- tapOn:
+    id: "sale-line-0-qty"
+- inputText: "10"
+- hideKeyboard
+- assertVisible:
+    id: "sales-total"
+    text: "Total sales Rs 1,500.00"
+- scrollUntilVisible:
+    element:
+      id: "save-sales"
+- tapOn:
+    id: "save-sales"
+- assertVisible: "Pulao × 10"
+- assertVisible:
+    id: "sales-revenue"
+    text: "Rs 1,500.00"
+- assertVisible:
+    id: "sales-cogs"
+    text: "Rs 200.00"
+# Ingredients came out of stock: 10 kg - 2 kg.
+- tapOn:
+    id: "tab-stock"
+- assertVisible: "8 kg"
+# 100 portions need 20 kg: warned, then refused.
+- tapOn:
+    id: "tab-sales"
+- tapOn:
+    id: "fab-add-sales"
+- tapOn:
+    id: "sale-line-0-dish"
+- tapOn:
+    id: "sale-line-0-dish-Pulao"
+- tapOn:
+    id: "sale-line-0-qty"
+- inputText: "100"
+- hideKeyboard
+- assertVisible:
+    id: "stock-warning"
+- scrollUntilVisible:
+    element:
+      id: "save-sales"
+- tapOn:
+    id: "save-sales"
+- assertVisible: ".*Not enough stock.*"
+- back
+# Voiding puts the rice back.
+- tapOn:
+    id: "tab-sales"
+- tapOn: "Void sale"
+- assertVisible: ".*Void.*"
+- tapOn:
+    id: "tab-stock"
+- assertVisible: "10 kg"

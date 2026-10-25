@@ -15,8 +15,14 @@ name: Data survives closing and reopening the app
 - launchApp
 - extendedWaitUntil:
     visible:
-      id: "item-Rice"
+      id: "tab-stock"
     timeout: 120000
+- tapOn:
+    id: "tab-stock"
+- extendedWaitUntil:
+    visible:
+      id: "item-Rice"
+    timeout: 20000
 - assertVisible: "2 kg"
 - assertVisible: "Rs 400.00"
 - tapOn:

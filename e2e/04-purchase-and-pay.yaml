@@ -8,8 +8,10 @@ name: Supplier, purchase on credit, partial payment, overpayment guard
       NAME: Rice
       QTY: "1"
       COST: "0"
-- tapOn:
-    id: "tab-suppliers"
+- runFlow:
+    file: ../e2e-shared/goto-more.yaml
+    env:
+      DEST: suppliers
 - tapOn:
     id: "fab-add-supplier"
 - tapOn:
@@ -19,6 +21,7 @@ name: Supplier, purchase on credit, partial payment, overpayment guard
 - tapOn:
     id: "save-supplier"
 - assertVisible: "✓ Settled"
+- back
 - tapOn:
     id: "tab-purchases"
 - tapOn:
@@ -55,8 +58,10 @@ name: Supplier, purchase on credit, partial payment, overpayment guard
 - tapOn:
     id: "save-purchase"
 - assertVisible: "Al-Noor"
-- tapOn:
-    id: "tab-suppliers"
+- runFlow:
+    file: ../e2e-shared/goto-more.yaml
+    env:
+      DEST: suppliers
 - assertVisible: "⚠ Owe Rs 2,000.00"
 - tapOn:
     id: "supplier-Al-Noor"
