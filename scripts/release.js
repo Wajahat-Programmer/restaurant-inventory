@@ -83,7 +83,7 @@ for (const key of ['RI_KEYSTORE_FILE', 'RI_KEYSTORE_PASSWORD', 'RI_KEY_ALIAS', '
 
 // 5. Build.
 const abis = option('abis') || 'arm64-v8a,armeabi-v7a';
-const gradlew = process.platform === 'win32' ? 'gradlew.bat' : './gradlew';
+const gradlew = process.platform === 'win32' ? '.\\gradlew.bat' : './gradlew';
 run(gradlew, ['app:assembleRelease', `-PreactNativeArchitectures=${abis}`], { cwd: path.join(root, 'android') });
 
 const built = path.join(root, 'android', 'app', 'build', 'outputs', 'apk', 'release', 'app-release.apk');
