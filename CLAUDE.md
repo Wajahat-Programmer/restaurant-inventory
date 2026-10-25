@@ -44,7 +44,7 @@ npm run android        # build + install + run (see Windows notes)
 
 ## Windows / environment notes
 - `C:` is nearly full. Set `GRADLE_USER_HOME=D:\gradle-home` and `TEMP/TMP=D:\tmp`; AVDs live in `D:\Android\avd` (`ANDROID_AVD_HOME`), emulator `RI_Pixel_API34`.
-- Maestro 2.11.0 is at `D:	ools\maestroin` (add to PATH). Needs the debug build installed, Metro running, `adb reverse tcp:8081 tcp:8081`; create `qa-report/` first for `--output`.
+- Maestro 2.11.0 is at `D:\tools\maestro\bin` (add to PATH). Needs the debug build installed, Metro running, `adb reverse tcp:8081 tcp:8081`; create `qa-report/` first for `--output`.
 - `react-native run-android` fails to find `gradlew.bat` here. Build with `cd android; .\gradlew.bat app:installDebug -PreactNativeArchitectures=x86_64`, then `adb reverse tcp:8081 tcp:8081` and `npx react-native start`.
 
 ## Workflow
