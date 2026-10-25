@@ -72,6 +72,16 @@ def enableProguardInReleaseBuilds = false
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+// One version for the whole project: package.json. 1.2.3 becomes versionCode 10203,
+// so every release has a higher code than the one before (Android needs that to update).
+def appVersion = new groovy.json.JsonSlurper().parse(file("../../package.json")).version
+def (vMajor, vMinor, vPatch) = appVersion.tokenize('.').collect { it.toInteger() }
+
+// Release signing: the key lives outside the repo, in ~/.gradle/gradle.properties
+// (RI_KEYSTORE_FILE, RI_KEYSTORE_PASSWORD, RI_KEY_ALIAS, RI_KEY_PASSWORD).
+// Every update must be signed with the same key, or Android refuses to install it.
+def hasReleaseKey = ['RI_KEYSTORE_FILE', 'RI_KEYSTORE_PASSWORD', 'RI_KEY_ALIAS', 'RI_KEY_PASSWORD'].every { project.hasProperty(it) }
+
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -82,8 +92,8 @@ android {
         applicationId "com.restaurantinventory"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode vMajor * 10000 + vMinor * 100 + vPatch
+        versionName appVersion
     }
     signingConfigs {
         debug {
@@ -92,15 +102,28 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        if (hasReleaseKey) {
+            release {
+                storeFile file(project.property('RI_KEYSTORE_FILE'))
+                storePassword project.property('RI_KEYSTORE_PASSWORD')
+                keyAlias project.property('RI_KEY_ALIAS')
+                keyPassword project.property('RI_KEY_PASSWORD')
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            // Without the release key this build is debug-signed and cannot update an
+            // app that was installed from a properly signed release.
+            if (hasReleaseKey) {
+                signingConfig signingConfigs.release
+            } else {
+                signingConfig signingConfigs.debug
+                logger.warn("WARNING: no RI_KEYSTORE_* properties found; signing the release build with the DEBUG key.")
+            }
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
