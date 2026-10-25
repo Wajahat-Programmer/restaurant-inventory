@@ -27,7 +27,7 @@ describe('runLocalBackup', () => {
   it('makes the file, logs it, remembers when it worked, and records who did it', async () => {
     await createItem(live.db, { name: 'Rice', baseUnit: 'g' });
     const info = await runLocalBackup(live.db, ports, live, 'a good passphrase', '2026-10-25');
-    expect(info.name).toBe('restaurant-2026-10-25-2130.rimbak');
+    expect(info.name).toBe('restaurant-2026-10-25-213000.rimbak');
     const [row] = await live.db.select().from(schema.backupLog);
     expect(row).toMatchObject({ kind: 'local', status: 'ok', fileName: info.name, sizeBytes: info.sizeBytes });
     const status = await backupStatus(live.db, ports.now().getTime());
@@ -72,7 +72,7 @@ describe('runLocalBackup', () => {
     await nodeFs.mkdir(ports.dirs.backups);
     await fsp.writeFile(`${ports.dirs.backups}/restaurant-2026-08-01-0900.rimbak`, 'old');
     await runLocalBackup(live.db, ports, live, 'a good passphrase', '2026-10-25');
-    expect(await fsp.readdir(ports.dirs.backups)).toEqual(['restaurant-2026-10-25-2130.rimbak']);
+    expect(await fsp.readdir(ports.dirs.backups)).toEqual(['restaurant-2026-10-25-213000.rimbak']);
   });
 
   it('only the owner can back up', async () => {

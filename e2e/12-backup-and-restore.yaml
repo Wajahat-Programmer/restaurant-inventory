@@ -1,0 +1,89 @@
+appId: com.restaurantinventory
+name: Back up, change the data, restore, and the data is back
+---
+- runFlow: ../e2e-shared/launch.yaml
+- runFlow:
+    file: ../e2e-shared/add-item.yaml
+    env:
+      NAME: Rice
+      QTY: "1000"
+      COST: "100"
+- runFlow:
+    file: ../e2e-shared/goto-more.yaml
+    env:
+      DEST: settings
+- tapOn:
+    id: "open-data"
+- scrollUntilVisible:
+    element:
+      id: "field-pass1"
+- tapOn:
+    id: "field-pass1"
+- inputText: backup phrase one
+- tapOn:
+    id: "field-pass2"
+- inputText: backup phrase one
+- hideKeyboard
+- tapOn:
+    id: "save-passphrase"
+- scrollUntilVisible:
+    element:
+      id: "backup-now"
+- tapOn:
+    id: "backup-now"
+# Building the file does 100,000 rounds of key derivation in plain JavaScript.
+- extendedWaitUntil:
+    visible:
+      id: "data-note"
+    timeout: 180000
+- assertVisible:
+    id: "data-note"
+    text: "✓ Backup saved: restaurant-.*"
+- back
+- back
+# Change the data after the backup.
+- runFlow:
+    file: ../e2e-shared/add-item.yaml
+    env:
+      NAME: Oil
+      QTY: "500"
+      COST: "50"
+- assertVisible:
+    id: "item-Oil"
+# Restore the backup.
+- runFlow:
+    file: ../e2e-shared/goto-more.yaml
+    env:
+      DEST: settings
+- tapOn:
+    id: "open-data"
+- scrollUntilVisible:
+    element:
+      id: "backups-list"
+- tapOn:
+    id: "backups-list"
+- tapOn: "Restore"
+- scrollUntilVisible:
+    element:
+      id: "field-restore-pass"
+- tapOn:
+    id: "field-restore-pass"
+- inputText: backup phrase one
+- hideKeyboard
+- tapOn:
+    id: "confirm-restore"
+- extendedWaitUntil:
+    visible:
+      id: "data-note"
+    timeout: 240000
+- assertVisible:
+    id: "data-note"
+    text: "✓ Restored from restaurant-.*"
+- back
+- back
+- tapOn:
+    id: "tab-stock"
+- assertVisible:
+    id: "item-Rice"
+- assertNotVisible:
+    id: "item-Oil"

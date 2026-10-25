@@ -44,10 +44,23 @@ describe('checkManifest', () => {
 
 describe('file names', () => {
   it('builds sortable names in local time and reads the date back', () => {
-    const n = backupFileName(new Date(2026, 9, 5, 7, 4));
-    expect(n).toBe('restaurant-2026-10-05-0704.rimbak');
+    const n = backupFileName(new Date(2026, 9, 5, 7, 4, 9));
+    expect(n).toBe('restaurant-2026-10-05-070409.rimbak');
     expect(backupDate(n)).toBe('2026-10-05');
+    // Older names (to the minute) are still understood.
+    expect(backupDate('restaurant-2026-10-05-0704.rimbak')).toBe('2026-10-05');
     expect(backupDate('holiday.jpg')).toBeNull();
+    expect(backupDate('restaurant-2026-10-05-070409-2.rimbak')).toBe('2026-10-05');
+  });
+
+  it('never reuses a name that is taken, even within the same second', () => {
+    const d = new Date(2026, 9, 5, 7, 4, 9);
+    const first = backupFileName(d);
+    const second = backupFileName(d, [first]);
+    const third = backupFileName(d, [first, second]);
+    expect(new Set([first, second, third]).size).toBe(3);
+    expect(second).toBe('restaurant-2026-10-05-070409-2.rimbak');
+    expect(third).toBe('restaurant-2026-10-05-070409-3.rimbak');
     expect(backupDate('restaurant-2026-10-05.rimbak')).toBeNull();
   });
 });

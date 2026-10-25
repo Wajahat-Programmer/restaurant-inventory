@@ -1,0 +1,112 @@
+appId: com.restaurantinventory
+name: PIN lock, staff role, wrong PIN
+---
+- runFlow: ../e2e-shared/launch.yaml
+- runFlow:
+    file: ../e2e-shared/goto-more.yaml
+    env:
+      DEST: settings
+- tapOn:
+    id: "open-security"
+- tapOn:
+    id: "field-owner-name"
+- inputText: Wajahat
+- tapOn:
+    id: "field-setup-pin"
+- inputText: "4829"
+- tapOn:
+    id: "field-setup-pin2"
+- inputText: "4829"
+- tapOn:
+    id: "field-setup-phrase"
+- inputText: my first restaurant
+- tapOn:
+    id: "field-setup-phrase2"
+- inputText: my first restaurant
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "setup-lock"
+- tapOn:
+    id: "setup-lock"
+- scrollUntilVisible:
+    element:
+      id: "security-done"
+    direction: UP
+- assertVisible:
+    id: "person-Wajahat"
+# Add a staff member.
+- scrollUntilVisible:
+    element:
+      id: "field-staff-name"
+- tapOn:
+    id: "field-staff-name"
+- inputText: Bilal
+- tapOn:
+    id: "field-staff-pin"
+- inputText: "7391"
+- hideKeyboard
+- tapOn:
+    id: "add-staff"
+- scrollUntilVisible:
+    element:
+      id: "person-Bilal"
+    direction: UP
+# Closing and reopening the app locks it.
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "lock-title"
+    timeout: 120000
+# Wrong PIN first.
+- tapOn:
+    id: "user-Wajahat"
+- runFlow:
+    file: ../e2e-shared/pin.yaml
+    env: { A: "0", B: "1", C: "1", D: "1" }
+- tapOn:
+    id: "pin-ok"
+- assertVisible: ".*Wrong PIN. 4 tries left.*"
+# Right PIN: in, with everything available.
+- runFlow:
+    file: ../e2e-shared/pin.yaml
+    env: { A: "4", B: "8", C: "2", D: "9" }
+- tapOn:
+    id: "pin-ok"
+- extendedWaitUntil:
+    visible:
+      id: "tab-stock"
+    timeout: 30000
+- tapOn:
+    id: "tab-more"
+- assertVisible:
+    id: "menu-reports"
+# Staff: locked again, then in with limited menus.
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "lock-title"
+    timeout: 60000
+- tapOn:
+    id: "user-Bilal"
+- runFlow:
+    file: ../e2e-shared/pin.yaml
+    env: { A: "7", B: "3", C: "9", D: "1" }
+- tapOn:
+    id: "pin-ok"
+- extendedWaitUntil:
+    visible:
+      id: "tab-more"
+    timeout: 30000
+- assertNotVisible:
+    id: "home-today-revenue"
+- tapOn:
+    id: "tab-more"
+- assertVisible:
+    id: "menu-forecast"
+- assertNotVisible:
+    id: "menu-reports"
+- assertNotVisible:
+    id: "menu-settings"

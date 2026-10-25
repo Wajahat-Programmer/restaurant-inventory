@@ -47,14 +47,23 @@ export function checkManifest(raw: unknown, currentSchema: number): ManifestChec
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
-/** restaurant-2026-10-25-2130.rimbak (local time) */
-export function backupFileName(d: Date): string {
-  return `restaurant-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}.rimbak`;
+/**
+ * restaurant-2026-10-25-213045.rimbak (local time, to the second). `taken`
+ * lists names already in use: a name is never reused, so a new backup (such as
+ * the safety copy made just before a restore) can never overwrite another.
+ */
+export function backupFileName(d: Date, taken: string[] = []): string {
+  const base = `restaurant-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+  let name = `${base}.rimbak`;
+  for (let n = 2; taken.includes(name); n++) {
+    name = `${base}-${n}.rimbak`;
+  }
+  return name;
 }
 
 /** Reads the date back out of a name made by backupFileName; null for other files. */
 export function backupDate(name: string): string | null {
-  const m = /^restaurant-(\d{4}-\d{2}-\d{2})-\d{4}\.rimbak$/.exec(name);
+  const m = /^restaurant-(\d{4}-\d{2}-\d{2})-\d{4,6}(?:-\d+)?\.rimbak$/.exec(name);
   return m ? m[1] : null;
 }
 

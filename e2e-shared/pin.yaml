@@ -1,0 +1,11 @@
+appId: com.restaurantinventory
+---
+# env: A, B, C, D = the four digits
+- tapOn:
+    id: "pin-key-${A}"
+- tapOn:
+    id: "pin-key-${B}"
+- tapOn:
+    id: "pin-key-${C}"
+- tapOn:
+    id: "pin-key-${D}"

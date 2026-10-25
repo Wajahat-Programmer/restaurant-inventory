@@ -122,7 +122,10 @@ export async function createBackup(
 
     const sealed = encryptBackup(fromBase64(await fs.readBase64(zipPath)), passphrase, opts);
     await fs.mkdir(dirs.backups);
-    const name = backupFileName(ports.now());
+    const name = backupFileName(
+      ports.now(),
+      (await fs.readDir(dirs.backups)).map(f => f.name),
+    );
     const path = join(dirs.backups, name);
     await fs.writeBase64(path, toBase64(sealed));
     return { name, path, sizeBytes: sealed.length };

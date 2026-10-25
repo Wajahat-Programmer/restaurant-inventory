@@ -1,0 +1,36 @@
+appId: com.restaurantinventory
+name: Settings, theme, ordering days, and the update check
+---
+- runFlow: ../e2e-shared/launch.yaml
+- runFlow:
+    file: ../e2e-shared/goto-more.yaml
+    env:
+      DEST: settings
+- assertVisible:
+    id: "update-version"
+    text: "Installed version: 1.0.0"
+- tapOn:
+    id: "theme-dark"
+- tapOn:
+    id: "lead-days-plus"
+- assertVisible:
+    id: "lead-days"
+    text: "3"
+- tapOn:
+    id: "theme-light"
+- scrollUntilVisible:
+    element:
+      id: "check-updates"
+- tapOn:
+    id: "check-updates"
+# The answer depends on the network and on what is published, but there is always a clear one.
+- extendedWaitUntil:
+    visible:
+      id: "update-status"
+    timeout: 40000
+- assertVisible:
+    id: "update-status"
+    text: ".*(No release has been published|Could not reach|latest version|is available|update server).*"
+- assertVisible:
+    id: "update-last"
+    text: "Last checked: 2.*"

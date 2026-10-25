@@ -68,7 +68,7 @@ describe('backup then restore', () => {
     await seed(live.db);
     const before = await snapshot(live.db);
     const info = await createBackup(ports, live, PASS, FAST);
-    expect(info.name).toBe('restaurant-2026-10-25-2130.rimbak');
+    expect(info.name).toBe('restaurant-2026-10-25-213000.rimbak');
     expect(info.sizeBytes).toBeGreaterThan(1000);
 
     // The phone loses its data: different items, no photos.
@@ -91,6 +91,20 @@ describe('backup then restore', () => {
     expect(await nodeFs.exists(`${ports.dirs.photos}.old`)).toBe(false);
     expect(await nodeFs.exists(`${root}/live/restore-staged.db`)).toBe(false);
     expect(await nodeFs.exists(ports.dirs.work + '/restore')).toBe(false);
+  });
+
+  it('a safety backup taken in the same second cannot overwrite the backup being restored', async () => {
+    await seed(live.db);
+    const original = await createBackup(ports, live, PASS, FAST);
+    const before = await fsp.readFile(original.path);
+    await createItem(live.db, { name: 'Added after', baseUnit: 'g' });
+    // The app takes a safety copy of the current data right before restoring.
+    const safety = await createBackup(ports, live, PASS, FAST);
+    expect(safety.path).not.toBe(original.path);
+    expect(Buffer.compare(await fsp.readFile(original.path), before)).toBe(0);
+    const r = await restoreBackup(ports, live, original.path, PASS);
+    expect((await snapshot(r.handle.db)).map(x => x[0]).sort()).toEqual(['Oil', 'Rice']); // no "Added after"
+    r.handle.close();
   });
 
   it('the backup file holds no readable data', async () => {

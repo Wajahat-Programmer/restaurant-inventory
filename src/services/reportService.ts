@@ -1,4 +1,4 @@
-import { and, eq, gte, inArray, lt, lte, ne, or, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, lt, lte, ne, or, isNull, sql } from 'drizzle-orm';
 import { Queryable, schema } from '../db/client';
 import { computePnl, Pnl } from '../domain/finance';
 import { Paisa } from '../domain/money';
@@ -140,5 +140,59 @@ export async function dashboard(
     lowOrOutItems: items.filter(i => i.status !== 'OK').length,
     suppliersOwedPaisa: sups.reduce((a, s) => a + Math.max(s.duePaisa, 0), 0),
     cashBalancePaisa: cash,
+  };
+}
+
+export interface WastageReport {
+  rows: {
+    id: number;
+    date: string;
+    item: string;
+    baseUnit: 'g' | 'ml' | 'pcs';
+    qtyBase: number;
+    valuePaisa: Paisa;
+    reason: string | null;
+  }[];
+  totalPaisa: Paisa;
+  /** Wastage as a share of everything used (sold plus thrown away). */
+  pct: number | null;
+}
+
+/** Everything thrown away in the period, newest first, with what it cost. */
+export async function wastageReport(q: Queryable, from: string, to: string): Promise<WastageReport> {
+  requirePermission('finance');
+  const { start, end } = rangeMs(from, to);
+  const found = await q
+    .select({
+      id: stockMovements.id,
+      createdAt: stockMovements.createdAt,
+      item: schema.items.name,
+      baseUnit: schema.items.baseUnit,
+      qty: stockMovements.qtyBase,
+      value: stockMovements.valuePaisa,
+      reason: stockMovements.reason,
+    })
+    .from(stockMovements)
+    .innerJoin(schema.items, eq(schema.items.id, stockMovements.itemId))
+    .where(and(eq(stockMovements.type, 'WASTE'), gte(stockMovements.createdAt, start), lt(stockMovements.createdAt, end)))
+    .orderBy(desc(stockMovements.id));
+  const pnl = await profitAndLoss(q, from, to);
+  const day = (ms: number) => {
+    const d = new Date(ms);
+    const p = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  };
+  return {
+    rows: found.map(r => ({
+      id: r.id,
+      date: day(r.createdAt),
+      item: r.item,
+      baseUnit: r.baseUnit,
+      qtyBase: -r.qty,
+      valuePaisa: -r.value,
+      reason: r.reason,
+    })),
+    totalPaisa: found.reduce((a, r) => a - r.value, 0),
+    pct: pnl.wastagePct,
   };
 }
