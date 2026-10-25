@@ -264,7 +264,9 @@ describe('audit trail', () => {
     await login(db, id, '4829');
     const log = await listAudit(db);
     expect(log.map(l => l.action).reverse()).toEqual(['lock.setup', 'login.failed', 'login']);
-    expect(JSON.stringify(log)).not.toMatch(/0000|4829|my first restaurant/);
+    // Look at what was written about people, not timestamps (which can contain "0000").
+    const text = JSON.stringify(log.map(l => [l.action, l.actor, l.entity, l.detail]));
+    expect(text).not.toMatch(/0000|4829|my first restaurant/);
   });
 
   it('shows newest first and respects the limit', async () => {

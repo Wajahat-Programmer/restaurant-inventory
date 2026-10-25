@@ -10,6 +10,7 @@ import { retryCutout } from '../../src/features/photos/savePhoto';
 import { Body, Btn, ErrorText, Row, StatusBadge, useColors } from '../../src/features/ui';
 import { deletePhoto, listPhotos, setPrimaryPhoto } from '../../src/services/photoService';
 import { getItem, setItemActive } from '../../src/services/itemService';
+import { allowed } from '../../src/services/session';
 import { spacing } from '../../src/theme/tokens';
 import { RootProps } from '../navigation/types';
 
@@ -137,9 +138,11 @@ export default function ItemDetailScreen({ navigation, route }: RootProps<'ItemD
         <Btn testID="act-waste" mode="contained-tonal" onPress={() => navigation.navigate('StockAction', { itemId, kind: 'waste' })}>
           Waste
         </Btn>
-        <Btn testID="act-adjust" mode="outlined" onPress={() => navigation.navigate('StockAction', { itemId, kind: 'adjust' })}>
-          Adjust
-        </Btn>
+        {allowed('adjust') && (
+          <Btn testID="act-adjust" mode="outlined" onPress={() => navigation.navigate('StockAction', { itemId, kind: 'adjust' })}>
+            Adjust
+          </Btn>
+        )}
       </Row>
       <Row>
         <Btn testID="act-edit" onPress={() => navigation.navigate('ItemForm', { itemId })}>Edit</Btn>

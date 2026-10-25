@@ -97,8 +97,8 @@ describe('checkForUpdate', () => {
     }
   });
 
-  it('can be told to trust a local test server (debug builds only)', async () => {
-    const url = 'https://localhost/a.apk';
+  it('can be told to trust a local test server over plain http (debug builds only)', async () => {
+    const url = 'http://localhost:8099/a.apk';
     const r = await checkForUpdate({
       currentVersion: '1.0.0',
       fetch: feed(200, release({ assets: [{ name: 'a.apk', browser_download_url: url, size: 1, digest: `sha256:${SHA}` }] })),
@@ -140,6 +140,10 @@ describe('helpers', () => {
     expect(hostOf('http://github.com/x')).toBeNull();
     expect(isTrustedUrl('https://objects.githubusercontent.com/abc')).toBe(true);
     expect(isTrustedUrl('https://github.com@evil.com/abc')).toBe(false);
+    // Plain http is never trusted unless the host was explicitly allowed.
+    expect(isTrustedUrl('http://localhost:8099/a.apk')).toBe(false);
+    expect(isTrustedUrl('http://localhost:8099/a.apk', ['localhost'])).toBe(true);
+    expect(isTrustedUrl('http://github.com/a.apk', ['localhost'])).toBe(false);
   });
 
   it('parses checksum files', () => {

@@ -5,6 +5,7 @@ import { formatPKR, parseRupees } from '../../src/domain/money';
 import { useQuery, useWrite } from '../../src/features/data';
 import { Body, Btn, ErrorText, todayISO, useColors } from '../../src/features/ui';
 import { listPurchases, listSuppliers, recordPayment } from '../../src/services/purchaseService';
+import { allowed } from '../../src/services/session';
 import { spacing } from '../../src/theme/tokens';
 import { RootProps } from '../navigation/types';
 
@@ -56,7 +57,7 @@ export default function SupplierDetailScreen({ navigation, route }: RootProps<'S
         </Card.Content>
       </Card>
 
-      {supplier.duePaisa > 0 && (
+      {supplier.duePaisa > 0 && allowed('finance') && (
         <>
           <TextInput
             mode="outlined"

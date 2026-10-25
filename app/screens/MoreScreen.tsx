@@ -1,17 +1,21 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Icon, Text } from 'react-native-paper';
 import { Body, useColors } from '../../src/features/ui';
+import { allowed } from '../../src/services/session';
+import { Permission } from '../../src/domain/auth';
 import { MIN_TOUCH_TARGET, spacing } from '../../src/theme/tokens';
 import { RootStackParamList } from '../navigation/types';
 import { useRootNav } from '../navigation/useRootNav';
 
-const MENU: { key: string; title: string; hint: string; icon: string; to: keyof RootStackParamList }[] = [
-  { key: 'reports', title: 'Reports', hint: 'Profit and loss, stock value, supplier spend', icon: 'chart-box-outline', to: 'Reports' },
-  { key: 'recipes', title: 'Dishes and recipes', hint: 'What goes into each dish, cost and margin', icon: 'chef-hat', to: 'Recipes' },
-  { key: 'expenses', title: 'Expenses', hint: 'Rent, salaries, gas, utilities', icon: 'cash-minus', to: 'Expenses' },
-  { key: 'cashbook', title: 'Cash book', hint: 'Money in and out, with balances', icon: 'book-open-variant', to: 'CashBook' },
-  { key: 'suppliers', title: 'Suppliers', hint: 'Who you buy from and what you owe', icon: 'truck', to: 'Suppliers' },
-  { key: 'count', title: 'Stock count', hint: 'Count the shelves and fix differences', icon: 'clipboard-check', to: 'Count' },
+const MENU: { key: string; title: string; hint: string; icon: string; to: keyof RootStackParamList; needs: Permission }[] = [
+  { key: 'forecast', title: 'Forecast and alerts', hint: 'What to order, what runs out, what needs attention', icon: 'chart-line', to: 'Forecast', needs: 'record' },
+  { key: 'reports', title: 'Reports', hint: 'Profit and loss, stock value, supplier spend', icon: 'chart-box-outline', to: 'Reports', needs: 'finance' },
+  { key: 'recipes', title: 'Dishes and recipes', hint: 'What goes into each dish, cost and margin', icon: 'chef-hat', to: 'Recipes', needs: 'recipes' },
+  { key: 'expenses', title: 'Expenses', hint: 'Rent, salaries, gas, utilities', icon: 'cash-minus', to: 'Expenses', needs: 'finance' },
+  { key: 'cashbook', title: 'Cash book', hint: 'Money in and out, with balances', icon: 'book-open-variant', to: 'CashBook', needs: 'finance' },
+  { key: 'suppliers', title: 'Suppliers', hint: 'Who you buy from and what you owe', icon: 'truck', to: 'Suppliers', needs: 'record' },
+  { key: 'count', title: 'Stock count', hint: 'Count the shelves and fix differences', icon: 'clipboard-check', to: 'Count', needs: 'record' },
+  { key: 'settings', title: 'Settings', hint: 'Theme, updates, PIN lock, backup, export and import', icon: 'cog', to: 'Settings', needs: 'manage' },
 ];
 
 export default function MoreScreen() {
@@ -19,7 +23,7 @@ export default function MoreScreen() {
   const nav = useRootNav();
   return (
     <Body>
-      {MENU.map(m => (
+      {MENU.filter(m => allowed(m.needs)).map(m => (
         <Pressable
           key={m.key}
           testID={`menu-${m.key}`}

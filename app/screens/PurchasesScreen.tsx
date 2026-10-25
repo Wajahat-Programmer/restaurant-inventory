@@ -5,6 +5,7 @@ import { formatPKR } from '../../src/domain/money';
 import { formatQty } from '../../src/domain/units';
 import { useQuery, useWrite } from '../../src/features/data';
 import { Btn, ErrorText, todayISO, useColors } from '../../src/features/ui';
+import { allowed } from '../../src/services/session';
 import { listItemPacks } from '../../src/services/itemService';
 import { listPurchases, voidPurchase } from '../../src/services/purchaseService';
 import { spacing } from '../../src/theme/tokens';
@@ -52,7 +53,7 @@ export default function PurchasesScreen() {
                   {`${l.itemName}: ${formatQty(l.qtyBase, data?.units.get(l.itemId) ?? 'pcs')} · ${formatPKR(l.totalPaisa)}`}
                 </Text>
               ))}
-              {p.status === 'POSTED' && (
+              {p.status === 'POSTED' && allowed('void') && (
                 <Btn
                   testID={`void-${p.id}`}
                   textColor={c.danger}

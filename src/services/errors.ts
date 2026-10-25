@@ -16,8 +16,13 @@ export function must<T>(value: T | undefined | null, message: string): T {
 /** Drizzle wraps driver errors; the SQLite message lives on `cause`. */
 function messageChain(e: unknown): string {
   const parts: string[] = [];
-  for (let cur = e; cur instanceof Error && parts.length < 5; cur = cur.cause) {
-    parts.push(cur.message);
+  // Duck-typed on purpose: errors thrown by the native SQLite addon may come from
+  // another JavaScript realm, where `instanceof Error` is false.
+  for (let cur: unknown = e; cur && typeof cur === 'object' && parts.length < 5; cur = (cur as { cause?: unknown }).cause) {
+    const m = (cur as { message?: unknown }).message;
+    if (typeof m === 'string') {
+      parts.push(m);
+    }
   }
   return parts.join(' | ');
 }

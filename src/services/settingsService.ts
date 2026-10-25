@@ -18,6 +18,8 @@ export const SETTING_DEFAULTS = {
   'backup.passphraseSet': '0',
   'drive.enabled': '0',
   'drive.account': '',
+  'alerts.lastNotified': '',
+  'backup.warnedOn': '',
 } as const;
 
 export type SettingKey = keyof typeof SETTING_DEFAULTS;

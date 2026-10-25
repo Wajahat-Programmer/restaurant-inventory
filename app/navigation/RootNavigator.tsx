@@ -7,14 +7,20 @@ import {
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Icon, useTheme } from 'react-native-paper';
+import { AutoChecks } from '../../src/features/AutoChecks';
+import { useAuth } from '../../src/features/auth/AuthProvider';
 import { useColors } from '../../src/features/ui';
+import AuditScreen from '../screens/AuditScreen';
 import CashBookScreen from '../screens/CashBookScreen';
 import CountScreen from '../screens/CountScreen';
 import ExpenseFormScreen from '../screens/ExpenseFormScreen';
+import DataScreen from '../screens/DataScreen';
 import ExpensesScreen from '../screens/ExpensesScreen';
+import ForecastScreen from '../screens/ForecastScreen';
 import HomeScreen from '../screens/HomeScreen';
 import ItemDetailScreen from '../screens/ItemDetailScreen';
 import ItemFormScreen from '../screens/ItemFormScreen';
+import LockScreen from '../screens/LockScreen';
 import MoreScreen from '../screens/MoreScreen';
 import PhotoCaptureScreen from '../screens/PhotoCaptureScreen';
 import PurchaseFormScreen from '../screens/PurchaseFormScreen';
@@ -22,6 +28,8 @@ import PurchasesScreen from '../screens/PurchasesScreen';
 import RecipeFormScreen from '../screens/RecipeFormScreen';
 import RecipesScreen from '../screens/RecipesScreen';
 import ReportsScreen from '../screens/ReportsScreen';
+import SecurityScreen from '../screens/SecurityScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 import SalesEntryScreen from '../screens/SalesEntryScreen';
 import SalesScreen from '../screens/SalesScreen';
 import StockActionScreen from '../screens/StockActionScreen';
@@ -61,6 +69,7 @@ function Tabs() {
 
 export default function RootNavigator() {
   const c = useColors();
+  const { locked } = useAuth();
   const base = useTheme().dark ? DarkTheme : DefaultTheme;
   const theme: Theme = {
     ...base,
@@ -80,24 +89,36 @@ export default function RootNavigator() {
           headerStyle: { backgroundColor: c.primary },
           headerTintColor: c.onPrimary,
         }}>
-        <Stack.Screen name="Tabs" component={Tabs} options={{ headerShown: false }} />
-        <Stack.Screen name="ItemForm" component={ItemFormScreen} options={{ title: 'Item' }} />
-        <Stack.Screen name="ItemDetail" component={ItemDetailScreen} options={{ title: 'Item' }} />
-        <Stack.Screen name="ItemPhoto" component={PhotoCaptureScreen} options={{ title: 'Photo' }} />
-        <Stack.Screen name="StockAction" component={StockActionScreen} options={{ title: 'Stock' }} />
-        <Stack.Screen name="PurchaseForm" component={PurchaseFormScreen} options={{ title: 'New purchase' }} />
-        <Stack.Screen name="Suppliers" component={SuppliersScreen} options={{ title: 'Suppliers' }} />
-        <Stack.Screen name="Count" component={CountScreen} options={{ title: 'Stock count' }} />
-        <Stack.Screen name="Recipes" component={RecipesScreen} options={{ title: 'Dishes and recipes' }} />
-        <Stack.Screen name="RecipeForm" component={RecipeFormScreen} options={{ title: 'Dish' }} />
-        <Stack.Screen name="SalesEntry" component={SalesEntryScreen} options={{ title: 'Enter sales' }} />
-        <Stack.Screen name="Expenses" component={ExpensesScreen} options={{ title: 'Expenses' }} />
-        <Stack.Screen name="ExpenseForm" component={ExpenseFormScreen} options={{ title: 'New expense' }} />
-        <Stack.Screen name="CashBook" component={CashBookScreen} options={{ title: 'Cash book' }} />
-        <Stack.Screen name="Reports" component={ReportsScreen} options={{ title: 'Reports' }} />
-        <Stack.Screen name="SupplierForm" component={SupplierFormScreen} options={{ title: 'Supplier' }} />
-        <Stack.Screen name="SupplierDetail" component={SupplierDetailScreen} options={{ title: 'Supplier' }} />
+        {locked ? (
+          <Stack.Screen name="Lock" component={LockScreen} options={{ headerShown: false }} />
+        ) : (
+          <>
+            <Stack.Screen name="Tabs" component={Tabs} options={{ headerShown: false }} />
+            <Stack.Screen name="ItemForm" component={ItemFormScreen} options={{ title: 'Item' }} />
+            <Stack.Screen name="ItemDetail" component={ItemDetailScreen} options={{ title: 'Item' }} />
+            <Stack.Screen name="ItemPhoto" component={PhotoCaptureScreen} options={{ title: 'Photo' }} />
+            <Stack.Screen name="StockAction" component={StockActionScreen} options={{ title: 'Stock' }} />
+            <Stack.Screen name="PurchaseForm" component={PurchaseFormScreen} options={{ title: 'New purchase' }} />
+            <Stack.Screen name="Suppliers" component={SuppliersScreen} options={{ title: 'Suppliers' }} />
+            <Stack.Screen name="Count" component={CountScreen} options={{ title: 'Stock count' }} />
+            <Stack.Screen name="Recipes" component={RecipesScreen} options={{ title: 'Dishes and recipes' }} />
+            <Stack.Screen name="RecipeForm" component={RecipeFormScreen} options={{ title: 'Dish' }} />
+            <Stack.Screen name="SalesEntry" component={SalesEntryScreen} options={{ title: 'Enter sales' }} />
+            <Stack.Screen name="Expenses" component={ExpensesScreen} options={{ title: 'Expenses' }} />
+            <Stack.Screen name="ExpenseForm" component={ExpenseFormScreen} options={{ title: 'New expense' }} />
+            <Stack.Screen name="CashBook" component={CashBookScreen} options={{ title: 'Cash book' }} />
+            <Stack.Screen name="Reports" component={ReportsScreen} options={{ title: 'Reports' }} />
+            <Stack.Screen name="Forecast" component={ForecastScreen} options={{ title: 'Forecast and alerts' }} />
+            <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
+            <Stack.Screen name="Security" component={SecurityScreen} options={{ title: 'PIN lock and people' }} />
+            <Stack.Screen name="Data" component={DataScreen} options={{ title: 'Export, import, backup' }} />
+            <Stack.Screen name="Audit" component={AuditScreen} options={{ title: 'Who did what' }} />
+            <Stack.Screen name="SupplierForm" component={SupplierFormScreen} options={{ title: 'Supplier' }} />
+            <Stack.Screen name="SupplierDetail" component={SupplierDetailScreen} options={{ title: 'Supplier' }} />
+          </>
+        )}
       </Stack.Navigator>
+      {!locked && <AutoChecks />}
     </NavigationContainer>
   );
 }

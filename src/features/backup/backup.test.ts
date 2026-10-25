@@ -142,7 +142,7 @@ describe('a bad restore changes nothing', () => {
   it('a damaged file', async () => {
     const info = await backedUp();
     const bytes = await fsp.readFile(info.path);
-    bytes[bytes.length - 20] ^= 1;
+    bytes[bytes.length - 20] = (bytes[bytes.length - 20] + 1) % 256;
     await fsp.writeFile(info.path, bytes);
     await expect(restoreBackup(ports, live, info.path, PASS)).rejects.toBeInstanceOf(BackupError);
     await untouched();

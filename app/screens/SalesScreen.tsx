@@ -6,6 +6,7 @@ import { useQuery, useWrite } from '../../src/features/data';
 import { Body, Btn, ErrorText, Line, PeriodNav, PeriodState, todayISO, useColors } from '../../src/features/ui';
 import { periodRange } from '../../src/domain/periods';
 import { listSales, voidSale } from '../../src/services/salesService';
+import { allowed } from '../../src/services/session';
 import { spacing } from '../../src/theme/tokens';
 import { useRootNav } from '../navigation/useRootNav';
 
@@ -58,7 +59,7 @@ export default function SalesScreen() {
               <Text style={{ color: c.textSecondary }}>
                 {`${s.date} · cost ${formatPKR(s.cogsPaisa)}${s.status === 'VOID' ? ' · ✖ Void' : ''}`}
               </Text>
-              {s.status === 'POSTED' && (
+              {s.status === 'POSTED' && allowed('void') && (
                 <Btn
                   testID={`void-sale-${s.id}`}
                   textColor={c.danger}

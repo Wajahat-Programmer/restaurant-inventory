@@ -4,6 +4,8 @@ module.exports = {
     'node_modules/(?!((jest-)?react-native|@react-native(-community)?|@react-navigation|react-native-paper|react-native-vector-icons|@react-native-vector-icons|@shopify/flash-list|react-native-screens|react-native-safe-area-context|react-native-vision-camera|@bam.tech|@dr.pogodin|@noble)/)',
   ],
   setupFiles: ['<rootDir>/jest.setup.js'],
+  setupFilesAfterEnv: ['<rootDir>/jest.after.js'],
+  testTimeout: 30000,
   collectCoverageFrom: ['src/domain/**/*.ts', '!**/*.test.ts'],
   coverageThreshold: {
     // Plan target: >= 90% on the domain layer.

@@ -63,10 +63,18 @@ export function hostOf(url: string): string | null {
   return m ? m[1].toLowerCase() : null;
 }
 
-/** `https` and on the allowed list; nothing else is ever downloaded. */
+/**
+ * `https` on the allowed list, and nothing else. Plain `http` is accepted only
+ * for hosts passed in `extraHosts`, which is how a debug build talks to a test
+ * server on the same machine; a release build passes none.
+ */
 export function isTrustedUrl(url: string, extraHosts: string[] = []): boolean {
-  const host = hostOf(url);
-  return !!host && [...TRUSTED_HOSTS, ...extraHosts].includes(host);
+  const secure = hostOf(url);
+  if (secure) {
+    return [...TRUSTED_HOSTS, ...extraHosts].includes(secure);
+  }
+  const plain = /^http:\/\/([^/:?#]+)(?::\d+)?(?:[/?#]|$)/i.exec(url);
+  return !!plain && extraHosts.includes(plain[1].toLowerCase());
 }
 
 function parseDigest(d: string | null | undefined): string | null {

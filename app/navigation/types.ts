@@ -27,6 +27,12 @@ export type RootStackParamList = {
   ExpenseForm: undefined;
   CashBook: undefined;
   Reports: undefined;
+  Forecast: undefined;
+  Settings: undefined;
+  Security: undefined;
+  Data: undefined;
+  Audit: undefined;
+  Lock: undefined;
   SupplierForm: { supplierId?: number } | undefined;
   SupplierDetail: { supplierId: number };
 };
