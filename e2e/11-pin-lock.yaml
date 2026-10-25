@@ -29,16 +29,13 @@ name: PIN lock, staff role, wrong PIN
       id: "setup-lock"
 - tapOn:
     id: "setup-lock"
-- scrollUntilVisible:
-    element:
-      id: "security-done"
-    direction: UP
+# Hashing the PIN takes a few seconds on a phone.
+- extendedWaitUntil:
+    visible: ".*The PIN lock is on.*"
+    timeout: 60000
 - assertVisible:
     id: "person-Wajahat"
 # Add a staff member.
-- scrollUntilVisible:
-    element:
-      id: "field-staff-name"
 - tapOn:
     id: "field-staff-name"
 - inputText: Bilal
@@ -48,10 +45,10 @@ name: PIN lock, staff role, wrong PIN
 - hideKeyboard
 - tapOn:
     id: "add-staff"
-- scrollUntilVisible:
-    element:
+- extendedWaitUntil:
+    visible:
       id: "person-Bilal"
-    direction: UP
+    timeout: 60000
 # Closing and reopening the app locks it.
 - stopApp
 - launchApp

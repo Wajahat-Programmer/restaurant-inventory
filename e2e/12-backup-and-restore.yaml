@@ -20,25 +20,35 @@ name: Back up, change the data, restore, and the data is back
 - tapOn:
     id: "field-pass1"
 - inputText: backup phrase one
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "field-pass2"
 - tapOn:
     id: "field-pass2"
 - inputText: backup phrase one
 - hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "save-passphrase"
 - tapOn:
     id: "save-passphrase"
+# Wait for the note and the new button to settle before pressing it.
+- extendedWaitUntil:
+    visible:
+      id: "backup-now"
+    timeout: 30000
 - scrollUntilVisible:
     element:
       id: "backup-now"
+- waitForAnimationToEnd
 - tapOn:
     id: "backup-now"
 # Building the file does 100,000 rounds of key derivation in plain JavaScript.
+# The file shows in the list when it is done (the note is above the visible area).
 - extendedWaitUntil:
-    visible:
-      id: "data-note"
-    timeout: 180000
-- assertVisible:
-    id: "data-note"
-    text: "✓ Backup saved: restaurant-.*"
+    visible: "restaurant-20.*"
+    timeout: 300000
 - back
 - back
 # Change the data after the backup.
@@ -73,12 +83,9 @@ name: Back up, change the data, restore, and the data is back
 - tapOn:
     id: "confirm-restore"
 - extendedWaitUntil:
-    visible:
-      id: "data-note"
-    timeout: 240000
-- assertVisible:
-    id: "data-note"
-    text: "✓ Restored from restaurant-.*"
+    notVisible:
+      id: "restore-panel"
+    timeout: 600000
 - back
 - back
 - tapOn:

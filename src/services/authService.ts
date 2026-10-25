@@ -78,12 +78,12 @@ export async function setUpLock(
     if (await lockEnabled(tx)) {
       throw new ValidationError('The PIN lock is already set up.');
     }
-    const h = hashSecret(input.pin);
+    const h = await hashSecret(input.pin);
     const [u] = await tx
       .insert(users)
       .values({ name, role: 'owner', pinHash: h.hash, pinSalt: h.salt, pinIterations: h.iterations })
       .returning({ id: users.id });
-    await setSetting(tx, RECOVERY_KEY, JSON.stringify(hashSecret(recovery)));
+    await setSetting(tx, RECOVERY_KEY, JSON.stringify(await hashSecret(recovery)));
     await audit(tx, 'lock.setup', 'user', u.id);
     return u.id;
   });
@@ -95,7 +95,7 @@ export async function addStaff(db: Db, input: { name: string; pin: string }): Pr
   checkPin(input.pin);
   try {
     return await inTransaction(db, async tx => {
-      const h = hashSecret(input.pin);
+      const h = await hashSecret(input.pin);
       const [u] = await tx
         .insert(users)
         .values({ name, role: 'staff', pinHash: h.hash, pinSalt: h.salt, pinIterations: h.iterations })
@@ -127,7 +127,7 @@ export async function login(db: Db, userId: number, pin: string, nowMs = Date.no
       return { ok: false, reason: 'locked', secondsLeft: wait } as const;
     }
     const rec: PinRecord = { hash: u.pinHash, salt: u.pinSalt, iterations: u.pinIterations };
-    if (!verifySecret(pin, rec)) {
+    if (!(await verifySecret(pin, rec))) {
       const next = afterFailure(state, nowMs);
       await tx.update(users).set(next).where(eq(users.id, u.id));
       await audit(tx, 'login.failed', 'user', u.id, { attempts: next.failedAttempts });
@@ -169,10 +169,10 @@ export async function changePin(db: Db, userId: number, oldPin: string, newPin: 
     if (me && me.id !== userId && me.role !== 'owner') {
       throw new ValidationError('You can only change your own PIN.');
     }
-    if (!verifySecret(oldPin, { hash: u.pinHash, salt: u.pinSalt, iterations: u.pinIterations })) {
+    if (!(await verifySecret(oldPin, { hash: u.pinHash, salt: u.pinSalt, iterations: u.pinIterations }))) {
       throw new ValidationError('The current PIN is wrong.');
     }
-    const h = hashSecret(newPin);
+    const h = await hashSecret(newPin);
     await tx.update(users).set({ pinHash: h.hash, pinSalt: h.salt, pinIterations: h.iterations }).where(eq(users.id, userId));
     await audit(tx, 'pin.change', 'user', userId);
   });
@@ -189,12 +189,12 @@ export async function resetOwnerPin(db: Db, recoveryPassphrase: string, newPin: 
     } catch {
       rec = null;
     }
-    if (!rec?.hash || !verifySecret(recoveryPassphrase.trim(), rec)) {
+    if (!rec?.hash || !(await verifySecret(recoveryPassphrase.trim(), rec))) {
       throw new ValidationError('That recovery passphrase is not right.');
     }
     const [owner] = await tx.select().from(users).where(and(eq(users.role, 'owner'), eq(users.isActive, true)));
     must(owner, 'No owner found');
-    const h = hashSecret(newPin);
+    const h = await hashSecret(newPin);
     await tx
       .update(users)
       .set({ pinHash: h.hash, pinSalt: h.salt, pinIterations: h.iterations, ...afterSuccess() })
@@ -222,7 +222,7 @@ export async function disableLock(db: Db, ownerPin: string): Promise<void> {
   await inTransaction(db, async tx => {
     const [owner] = await tx.select().from(users).where(and(eq(users.role, 'owner'), eq(users.isActive, true)));
     must(owner, 'The lock is not set up.');
-    if (!verifySecret(ownerPin, { hash: owner.pinHash, salt: owner.pinSalt, iterations: owner.pinIterations })) {
+    if (!(await verifySecret(ownerPin, { hash: owner.pinHash, salt: owner.pinSalt, iterations: owner.pinIterations }))) {
       throw new ValidationError('The owner PIN is wrong.');
     }
     // Log first (it points at the signed-in person), then detach every entry from

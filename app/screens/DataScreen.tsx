@@ -194,7 +194,7 @@ export default function DataScreen() {
     setBusy('Restoring… do not close the app.');
     try {
       // A safety copy of what is on the phone now, so a mistaken restore can be undone.
-      await runLocalBackup(db, ports(), handle, restorePass, todayISO());
+      await runLocalBackup(db, ports(), handle, restorePass, todayISO(), { keep: [restoring.name] });
       const r = await restoreBackup(ports(), handle, restoring.path, restorePass);
       replace(r.handle);
       await audit(r.handle.db, 'backup.restore', 'backup', null, { file: restoring.name });

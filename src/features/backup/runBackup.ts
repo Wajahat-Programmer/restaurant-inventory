@@ -14,7 +14,7 @@ const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 /**
  * One backup attempt, start to finish: make the file, record the result (good
  * or bad, so failures are visible), remember when it last worked, and tidy
- * up old backups. Never leaves a half-made file.
+ * up old backups (except those in `opts.keep`). Never leaves a half-made file.
  */
 export async function runLocalBackup(
   db: Db,
@@ -22,6 +22,7 @@ export async function runLocalBackup(
   live: DbHandle,
   passphrase: string,
   today: string,
+  opts: { keep?: string[] } = {},
 ): Promise<BackupInfo> {
   requirePermission('manage');
   try {
@@ -29,7 +30,7 @@ export async function runLocalBackup(
     await db.insert(backupLog).values({ kind: 'local', status: 'ok', fileName: info.name, sizeBytes: info.sizeBytes });
     await setSetting(db, 'backup.lastOkAt', String(ports.now().getTime()));
     await audit(db, 'backup.create', 'backup', null, { file: info.name, bytes: info.sizeBytes });
-    await pruneBackups(ports, today);
+    await pruneBackups(ports, today, opts.keep);
     return info;
   } catch (e) {
     await db.insert(backupLog).values({ kind: 'local', status: 'failed', error: message(e).slice(0, 300) });

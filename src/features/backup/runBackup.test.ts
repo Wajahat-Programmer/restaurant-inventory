@@ -4,7 +4,7 @@ import { schema } from '../../db/client';
 import { createItem } from '../../services/itemService';
 import { setSession } from '../../services/session';
 import { makeTempDir, nodeFs, nodePorts, openDbFile } from '../../../test-utils/nodePorts';
-import { BackupPorts, DbHandle } from './backupService';
+import { BackupPorts, DbHandle, listBackups, restoreBackup } from './backupService';
 import { backupStatus, runLocalBackup } from './runBackup';
 
 let root: string;
@@ -73,6 +73,34 @@ describe('runLocalBackup', () => {
     await fsp.writeFile(`${ports.dirs.backups}/restaurant-2026-08-01-0900.rimbak`, 'old');
     await runLocalBackup(live.db, ports, live, 'a good passphrase', '2026-10-25');
     expect(await fsp.readdir(ports.dirs.backups)).toEqual(['restaurant-2026-10-25-213000.rimbak']);
+  });
+
+  it('the safety backup before a restore never deletes the backup being restored', async () => {
+    // Two backups on the same day: the newer one would normally push the older out.
+    let clock = new Date(2026, 9, 25, 9, 0, 0);
+    const timed: BackupPorts = { ...ports, now: () => clock };
+    await createItem(live.db, { name: 'Rice', baseUnit: 'g' });
+    const wanted = await runLocalBackup(live.db, timed, live, 'a good passphrase', '2026-10-25');
+    await createItem(live.db, { name: 'Oil', baseUnit: 'ml' });
+    clock = new Date(2026, 9, 25, 21, 0, 0);
+
+    const safety = await runLocalBackup(live.db, timed, live, 'a good passphrase', '2026-10-25', { keep: [wanted.name] });
+    expect((await listBackups(timed)).map(b => b.name).sort()).toEqual([wanted.name, safety.name].sort());
+
+    const r = await restoreBackup(timed, live, wanted.path, 'a good passphrase');
+    const names = (await r.handle.db.select().from(schema.items)).map(i => i.name);
+    expect(names).toEqual(['Rice']);
+    r.handle.close();
+  });
+
+  it('without keep, the newer backup of the same day replaces the older one (the normal rule)', async () => {
+    let clock = new Date(2026, 9, 25, 9, 0, 0);
+    const timed: BackupPorts = { ...ports, now: () => clock };
+    const first = await runLocalBackup(live.db, timed, live, 'a good passphrase', '2026-10-25');
+    clock = new Date(2026, 9, 25, 21, 0, 0);
+    const second = await runLocalBackup(live.db, timed, live, 'a good passphrase', '2026-10-25');
+    expect((await listBackups(timed)).map(b => b.name)).toEqual([second.name]);
+    expect(first.name).not.toBe(second.name);
   });
 
   it('only the owner can back up', async () => {

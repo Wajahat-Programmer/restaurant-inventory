@@ -120,7 +120,8 @@ export async function createBackup(
       throw new Error('The data is too big to back up in one file (over 200 MB). Delete old photos first.');
     }
 
-    const sealed = encryptBackup(fromBase64(await fs.readBase64(zipPath)), passphrase, opts);
+    const rawZip = fromBase64(await fs.readBase64(zipPath));
+    const sealed = await encryptBackup(rawZip, passphrase, opts);
     await fs.mkdir(dirs.backups);
     const name = backupFileName(
       ports.now(),
@@ -134,10 +135,15 @@ export async function createBackup(
   }
 }
 
-/** Deletes backups outside the 7 daily + 4 weekly rule. Returns what was removed. */
-export async function pruneBackups(ports: BackupPorts, today: string): Promise<string[]> {
+/**
+ * Deletes backups outside the 7 daily + 4 weekly rule. Returns what was removed.
+ * Names in `keep` are never deleted: a restore passes the file it is about to
+ * read, because the safety backup made just before it is newer and would
+ * otherwise push that file out of its day.
+ */
+export async function pruneBackups(ports: BackupPorts, today: string, keep: string[] = []): Promise<string[]> {
   const files = await listBackups(ports);
-  const { remove } = retention(files.map(f => f.name), today);
+  const remove = retention(files.map(f => f.name), today).remove.filter(name => !keep.includes(name));
   for (const name of remove) {
     await ports.fs.remove(join(ports.dirs.backups, name));
   }
@@ -183,7 +189,7 @@ export async function restoreBackup(
   if (!looksLikeBackup(sealed)) {
     throw new BackupError('not-a-backup', 'This is not a Restaurant Inventory backup file.');
   }
-  const plain = decryptBackup(sealed, passphrase); // wrong passphrase or damage stops here
+  const plain = await decryptBackup(sealed, passphrase); // wrong passphrase or damage stops here
 
   const work = join(dirs.work, 'restore');
   await fs.remove(work);

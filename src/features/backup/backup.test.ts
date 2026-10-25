@@ -193,7 +193,7 @@ describe('a bad restore changes nothing', () => {
     await nodeFs.writeBase64(`${dir}/manifest.json`, toBase64(utf8Encode(JSON.stringify(full))));
     await fakeZip.zip([dbPath, `${dir}/manifest.json`], `${dir}/bundle.zip`);
     const file = `${root}/crafted.rimbak`;
-    await fsp.writeFile(file, encryptBackup(await fsp.readFile(`${dir}/bundle.zip`), PASS, FAST));
+    await fsp.writeFile(file, await encryptBackup(await fsp.readFile(`${dir}/bundle.zip`), PASS, FAST));
     return file;
   }
 
@@ -271,7 +271,7 @@ describe('older backups', () => {
     await nodeFs.writeBase64(`${dir}/manifest.json`, toBase64(utf8Encode(JSON.stringify(manifest))));
     await fakeZip.zip([dbPath, `${dir}/manifest.json`], `${dir}/bundle.zip`);
     const file = `${root}/old.rimbak`;
-    await fsp.writeFile(file, encryptBackup(await fsp.readFile(`${dir}/bundle.zip`), PASS, FAST));
+    await fsp.writeFile(file, await encryptBackup(await fsp.readFile(`${dir}/bundle.zip`), PASS, FAST));
 
     const r = await restoreBackup(ports, live, file, PASS);
     expect((await snapshot(r.handle.db)).map(x => x[0])).toEqual(['Old rice']);

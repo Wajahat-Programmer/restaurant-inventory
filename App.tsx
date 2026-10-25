@@ -6,6 +6,7 @@ import RootNavigator from './app/navigation/RootNavigator';
 import { Db } from './src/db/client';
 import { AuthProvider } from './src/features/auth/AuthProvider';
 import { DbProvider, useDb } from './src/features/DbProvider';
+import { installNativeKdf } from './src/features/kdfDevice';
 import { prepareCutoutModel } from './src/features/photos/devicePorts';
 import { isThemeSetting, useThemeStore } from './src/features/themeStore';
 import { getSetting } from './src/services/settingsService';
@@ -31,6 +32,8 @@ function Shell() {
     </PaperProvider>
   );
 }
+
+installNativeKdf();
 
 export default function App({ db }: { db?: Db }) {
   const system = useColorScheme() === 'dark' ? 'dark' : 'light';

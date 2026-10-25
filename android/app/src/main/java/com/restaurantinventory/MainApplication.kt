@@ -7,6 +7,7 @@ import com.facebook.react.ReactHost
 import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.restaurantinventory.cutout.CutoutPackage
+import com.restaurantinventory.kdf.KdfPackage
 import com.restaurantinventory.update.AppUpdatePackage
 
 class MainApplication : Application(), ReactApplication {
@@ -18,6 +19,7 @@ class MainApplication : Application(), ReactApplication {
         PackageList(this).packages.apply {
           add(CutoutPackage())
           add(AppUpdatePackage())
+          add(KdfPackage())
         },
     )
   }
