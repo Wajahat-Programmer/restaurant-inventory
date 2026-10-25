@@ -1,0 +1,32 @@
+appId: com.restaurantinventory
+name: A newer version is found, shown with its notes, downloaded, checked and installed
+---
+# Needs a debug build, Metro, and a test feed: serve a folder holding latest.json (GitHub release format, with a v1.0.1 APK and its sha256 digest) on port 8099, run `adb reverse tcp:8099 tcp:8099`, and write the feed address into the app: adb shell "run-as com.restaurantinventory sh -c 'mkdir -p files && echo http://localhost:8099/latest.json > files/dev-feed.txt'"
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "tab-stock"
+    timeout: 120000
+- runFlow:
+    file: ../e2e-shared/goto-more.yaml
+    env:
+      DEST: settings
+- tapOn:
+    id: "check-updates"
+- extendedWaitUntil:
+    visible:
+      id: "update-notes"
+    timeout: 60000
+- assertVisible:
+    id: "update-status"
+    text: '.*1.0.1.*'
+- assertVisible:
+    id: "update-notes"
+    text: ".*Something new.*"
+- tapOn:
+    id: "install-update"
+# Android's own installer takes over; allow the update.
+- extendedWaitUntil:
+    visible: "Update|Install"
+    timeout: 120000
+- tapOn: "Update|Install"
