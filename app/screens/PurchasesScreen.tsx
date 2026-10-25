@@ -8,12 +8,13 @@ import { Btn, ErrorText, todayISO, useColors } from '../../src/features/ui';
 import { listItemPacks } from '../../src/services/itemService';
 import { listPurchases, voidPurchase } from '../../src/services/purchaseService';
 import { spacing } from '../../src/theme/tokens';
-import { RootProps } from '../navigation/types';
+import { useRootNav } from '../navigation/useRootNav';
 import { useState } from 'react';
 
 const PAYMENT_LABEL = { PAID: '✓ Paid', PARTIAL: '⚠ Part paid', CREDIT: '⚠ On credit' } as const;
 
-export default function PurchasesScreen({ navigation }: RootProps<'Tabs'>) {
+export default function PurchasesScreen() {
+  const nav = useRootNav();
   const c = useColors();
   const write = useWrite();
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +76,7 @@ export default function PurchasesScreen({ navigation }: RootProps<'Tabs'>) {
         label="Purchase"
         style={[styles.fab, { backgroundColor: c.accent }]}
         color={c.onAccent}
-        onPress={() => navigation.getParent()?.navigate('PurchaseForm')}
+        onPress={() => nav.navigate('PurchaseForm')}
       />
     </View>
   );

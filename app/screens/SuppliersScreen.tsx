@@ -8,7 +8,7 @@ import { listSuppliers } from '../../src/services/purchaseService';
 import { MIN_TOUCH_TARGET, spacing } from '../../src/theme/tokens';
 import { RootProps } from '../navigation/types';
 
-export default function SuppliersScreen({ navigation }: RootProps<'Tabs'>) {
+export default function SuppliersScreen({ navigation }: RootProps<'Suppliers'>) {
   const c = useColors();
   const { data, loading, error } = useQuery(db => listSuppliers(db));
   const owed = (data ?? []).reduce((a, s) => a + Math.max(s.duePaisa, 0), 0);
@@ -36,7 +36,7 @@ export default function SuppliersScreen({ navigation }: RootProps<'Tabs'>) {
           <Pressable
             testID={`supplier-${s.name}`}
             accessibilityRole="button"
-            onPress={() => navigation.getParent()?.navigate('SupplierDetail', { supplierId: s.id })}
+            onPress={() => navigation.navigate('SupplierDetail', { supplierId: s.id })}
             style={[styles.card, { backgroundColor: c.surface, borderColor: c.outline }]}>
             <View style={styles.main}>
               <Text variant="titleMedium">{s.name}</Text>
@@ -54,7 +54,7 @@ export default function SuppliersScreen({ navigation }: RootProps<'Tabs'>) {
         label="Supplier"
         style={[styles.fab, { backgroundColor: c.accent }]}
         color={c.onAccent}
-        onPress={() => navigation.getParent()?.navigate('SupplierForm')}
+        onPress={() => navigation.navigate('SupplierForm')}
       />
     </View>
   );

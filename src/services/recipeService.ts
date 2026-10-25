@@ -79,7 +79,7 @@ export async function setRecipeActive(db: Db, id: number, isActive: boolean): Pr
  * Cost per base unit: the stock's weighted average, or if there is none on the
  * shelf the newest purchase price from a purchase that was not voided.
  */
-async function costPerBase(q: Queryable): Promise<Map<number, number>> {
+export async function ingredientCosts(q: Queryable): Promise<Map<number, number>> {
   const levels = await q.select().from(stockLevels);
   const map = new Map<number, number>();
   for (const l of levels) {
@@ -120,7 +120,7 @@ export async function listRecipes(
     .from(recipeLines)
     .innerJoin(items, eq(items.id, recipeLines.itemId))
     .orderBy(items.name);
-  const costs = await costPerBase(q);
+  const costs = await ingredientCosts(q);
 
   return rows
     .filter(r => opts.includeInactive || r.isActive)

@@ -9,9 +9,10 @@ import { ItemPhoto } from '../../src/features/photos/ItemPhoto';
 import { ErrorText, StatusBadge, useColors } from '../../src/features/ui';
 import { listItems } from '../../src/services/itemService';
 import { MIN_TOUCH_TARGET, spacing } from '../../src/theme/tokens';
-import { RootProps } from '../navigation/types';
+import { useRootNav } from '../navigation/useRootNav';
 
-export default function StockScreen({ navigation }: RootProps<'Tabs'>) {
+export default function StockScreen() {
+  const nav = useRootNav();
   const c = useColors();
   const [search, setSearch] = useState('');
   const { data, error, loading } = useQuery(db => listItems(db, { search }), [search]);
@@ -52,7 +53,7 @@ export default function StockScreen({ navigation }: RootProps<'Tabs'>) {
           <Pressable
             testID={`item-${item.name}`}
             accessibilityRole="button"
-            onPress={() => navigation.getParent()?.navigate('ItemDetail', { itemId: item.id })}
+            onPress={() => nav.navigate('ItemDetail', { itemId: item.id })}
             style={[styles.card, { backgroundColor: c.surface, borderColor: c.outline }]}>
             <ItemPhoto path={item.thumbPath} size={56} testID={`thumb-${item.name}`} />
             <View style={styles.cardMain}>
@@ -80,7 +81,7 @@ export default function StockScreen({ navigation }: RootProps<'Tabs'>) {
         label="Item"
         style={[styles.fab, { backgroundColor: c.accent }]}
         color={c.onAccent}
-        onPress={() => navigation.getParent()?.navigate('ItemForm')}
+        onPress={() => nav.navigate('ItemForm')}
       />
     </View>
   );

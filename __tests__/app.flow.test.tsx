@@ -23,6 +23,14 @@ const text = (id: string) => {
 async function open() {
   await render(<App db={db} />);
   await screen.findByTestId('tab-stock');
+  // The app opens on Home; most tests start from the stock list.
+  await press('tab-stock');
+}
+
+/** Screens under More. */
+async function goMore(menu: 'suppliers' | 'count' | 'recipes' | 'expenses' | 'cashbook' | 'reports') {
+  await press('tab-more');
+  await press(`menu-${menu}`);
 }
 
 describe('stock list', () => {
@@ -182,7 +190,7 @@ describe('suppliers and purchases', () => {
     expect((await getItem(db, itemId)).qtyBase).toBe(50000);
     expect((await listSuppliers(db))[0].duePaisa).toBe(1200000);
 
-    await press('tab-suppliers');
+    await goMore('suppliers');
     expect(await screen.findByText('⚠ Owe Rs 12,000.00')).toBeTruthy();
     await press('supplier-Al-Noor');
     await screen.findByTestId('supplier-due');
@@ -207,7 +215,7 @@ describe('suppliers and purchases', () => {
 
   it('adds a supplier from the form with an opening balance', async () => {
     await open();
-    await press('tab-suppliers');
+    await goMore('suppliers');
     await press('fab-add-supplier');
     await type('field-supplier-name', 'City Wholesale');
     await type('field-supplier-opening', '2500');
@@ -234,7 +242,7 @@ describe('stock count', () => {
     const id = await createItem(db, { name: 'Rice', baseUnit: 'g' }, { qtyBase: 1000, valuePaisa: 10000 });
     await createItem(db, { name: 'Salt', baseUnit: 'g' }, { qtyBase: 500, valuePaisa: 500 });
     await open();
-    await press('tab-count');
+    await goMore('count');
     await press('start-count');
 
     expect(await screen.findByTestId('count-progress')).toBeTruthy();
@@ -251,7 +259,7 @@ describe('stock count', () => {
   it('posts typed counts without needing the field to lose focus', async () => {
     const id = await createItem(db, { name: 'Rice', baseUnit: 'g' }, { qtyBase: 1000, valuePaisa: 10000 });
     await open();
-    await press('tab-count');
+    await goMore('count');
     await press('start-count');
     await screen.findByTestId('counted-Rice');
     await type('counted-Rice', '1100');
@@ -265,7 +273,7 @@ describe('stock count', () => {
   it('flags a bad count instead of posting it', async () => {
     await createItem(db, { name: 'Rice', baseUnit: 'g' }, { qtyBase: 1000, valuePaisa: 10000 });
     await open();
-    await press('tab-count');
+    await goMore('count');
     await press('start-count');
     await screen.findByTestId('counted-Rice');
     await type('counted-Rice', '12x');
@@ -277,7 +285,7 @@ describe('stock count', () => {
   it('will not post an empty count', async () => {
     await createItem(db, { name: 'Rice', baseUnit: 'g' });
     await open();
-    await press('tab-count');
+    await goMore('count');
     await press('start-count');
     await screen.findByTestId('post-count');
     await press('post-count');

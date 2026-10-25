@@ -7,7 +7,8 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { Button, ButtonProps, HelperText, Text, TextInput, useTheme } from 'react-native-paper';
+import { Button, ButtonProps, HelperText, SegmentedButtons, Text, TextInput, useTheme } from 'react-native-paper';
+import { periodLabel, PeriodKind, shiftPeriod } from '../domain/periods';
 import { StockStatus, STATUS_LABEL } from '../domain/stockStatus';
 import { colors, fontSize, MIN_TOUCH_TARGET, spacing, ThemeMode } from '../theme/tokens';
 
@@ -74,6 +75,74 @@ export function Select<V extends string | number>({
           ))}
         </View>
       )}
+    </View>
+  );
+}
+
+export interface PeriodState {
+  kind: PeriodKind;
+  anchor: string;
+}
+
+/** Day / week / month switch with previous and next arrows. */
+export function PeriodNav({
+  value,
+  onChange,
+  kinds = ['day', 'week', 'month'],
+  testID = 'period',
+}: {
+  value: PeriodState;
+  onChange: (v: PeriodState) => void;
+  kinds?: PeriodKind[];
+  testID?: string;
+}) {
+  const c = useColors();
+  return (
+    <View style={styles.periodWrap}>
+      {kinds.length > 1 && (
+        <SegmentedButtons
+          value={value.kind}
+          onValueChange={k => onChange({ ...value, kind: k as PeriodKind })}
+          buttons={kinds.map(k => ({ value: k, label: k[0].toUpperCase() + k.slice(1), testID: `${testID}-${k}` }))}
+        />
+      )}
+      <View style={styles.row}>
+        <Btn testID={`${testID}-prev`} icon="chevron-left" onPress={() => onChange({ ...value, anchor: shiftPeriod(value.kind, value.anchor, -1) })}>
+          Back
+        </Btn>
+        <Text testID={`${testID}-label`} variant="titleMedium" style={[styles.periodLabel, { color: c.textPrimary }]}>
+          {periodLabel(value.kind, value.anchor)}
+        </Text>
+        <Btn testID={`${testID}-next`} icon="chevron-right" contentStyle={styles.rtl} onPress={() => onChange({ ...value, anchor: shiftPeriod(value.kind, value.anchor, 1) })}>
+          Next
+        </Btn>
+      </View>
+    </View>
+  );
+}
+
+/** Label on the left, figure on the right. */
+export function Line({
+  label,
+  value,
+  strong,
+  tone,
+  testID,
+}: {
+  label: string;
+  value: string;
+  strong?: boolean;
+  tone?: 'good' | 'bad' | 'warn';
+  testID?: string;
+}) {
+  const c = useColors();
+  const color = tone === 'good' ? c.success : tone === 'bad' ? c.danger : tone === 'warn' ? c.warning : c.textPrimary;
+  return (
+    <View style={styles.line}>
+      <Text style={[styles.lineLabel, { color: c.textSecondary }]}>{label}</Text>
+      <Text testID={testID} style={[styles.num, strong && styles.strong, { color }]}>
+        {value}
+      </Text>
     </View>
   );
 }
@@ -180,6 +249,13 @@ const styles = StyleSheet.create({
   badge: { fontSize: fontSize.sm, fontWeight: '600' },
   err: { fontSize: fontSize.sm },
   btn: { minHeight: MIN_TOUCH_TARGET },
+  rtl: { flexDirection: 'row-reverse', minHeight: MIN_TOUCH_TARGET },
+  periodWrap: { gap: spacing.sm },
+  periodLabel: { flex: 1, textAlign: 'center' },
+  line: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md, paddingVertical: spacing.xs },
+  lineLabel: { flex: 1 },
+  num: { fontVariant: ['tabular-nums'] },
+  strong: { fontWeight: '700' },
   grow: { flex: 1 },
   fill: { flex: 1 },
   options: { borderWidth: 1, borderRadius: spacing.sm, padding: spacing.xs },
