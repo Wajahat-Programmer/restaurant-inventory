@@ -9,6 +9,7 @@ import { spacing } from '../../theme/tokens';
 import { applyUpdate } from './applyUpdate';
 import { UpdateCheck } from './checkForUpdate';
 import { installedVersion, timedFetch, updatePorts } from './devicePorts';
+import { getDevFeed } from './devFeed';
 import { runUpdateCheck } from './updateController';
 
 const mb = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -46,7 +47,7 @@ export function UpdateCard() {
         fetch: timedFetch,
         currentVersion: installedVersion,
         now: Date.now,
-        ...(__DEV__ ? await devFeed() : {}),
+        ...(__DEV__ ? await getDevFeed() : {}),
       },
       { manual: true },
     );
@@ -117,12 +118,6 @@ export function UpdateCard() {
       </Card.Content>
     </Card>
   );
-}
-
-/** In a debug build, a test server set in settings stands in for GitHub. */
-async function devFeed() {
-  const { getDevFeed } = await import('./devFeed');
-  return getDevFeed();
 }
 
 const styles = StyleSheet.create({

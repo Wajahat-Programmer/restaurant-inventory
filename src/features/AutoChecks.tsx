@@ -9,6 +9,7 @@ import { backupStatus, runLocalBackup } from './backup/runBackup';
 import { useDbHost } from './DbProvider';
 import { notifyAlerts, notifyBackupFailing, notifyUpdate } from './notify/notify';
 import { installedVersion, timedFetch } from './update/devicePorts';
+import { getDevFeed } from './update/devFeed';
 import { claimAnnouncement, runUpdateCheck } from './update/updateController';
 import { todayISO } from './ui';
 
@@ -42,7 +43,7 @@ export function AutoChecks() {
             fetch: timedFetch,
             currentVersion: installedVersion,
             now: Date.now,
-            ...(__DEV__ ? await (await import('./update/devFeed')).getDevFeed() : {}),
+            ...(__DEV__ ? await getDevFeed() : {}),
           },
           { manual: false },
         );
