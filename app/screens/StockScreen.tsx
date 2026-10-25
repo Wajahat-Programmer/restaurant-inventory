@@ -5,6 +5,7 @@ import { FAB, Searchbar, Text } from 'react-native-paper';
 import { formatPKR } from '../../src/domain/money';
 import { formatQty } from '../../src/domain/units';
 import { useQuery } from '../../src/features/data';
+import { ItemPhoto } from '../../src/features/photos/ItemPhoto';
 import { ErrorText, StatusBadge, useColors } from '../../src/features/ui';
 import { listItems } from '../../src/services/itemService';
 import { MIN_TOUCH_TARGET, spacing } from '../../src/theme/tokens';
@@ -53,6 +54,7 @@ export default function StockScreen({ navigation }: RootProps<'Tabs'>) {
             accessibilityRole="button"
             onPress={() => navigation.getParent()?.navigate('ItemDetail', { itemId: item.id })}
             style={[styles.card, { backgroundColor: c.surface, borderColor: c.outline }]}>
+            <ItemPhoto path={item.thumbPath} size={56} testID={`thumb-${item.name}`} />
             <View style={styles.cardMain}>
               <Text variant="titleMedium">{item.name}</Text>
               <Text style={{ color: c.textSecondary }}>
@@ -93,6 +95,7 @@ const styles = StyleSheet.create({
     minHeight: MIN_TOUCH_TARGET,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: spacing.md,
     padding: spacing.md,
     marginBottom: spacing.sm,
     borderRadius: spacing.sm,

@@ -4,6 +4,7 @@ import { Db } from '../src/db/client';
 import { createTestDb } from '../src/db/testing';
 import { createItem, getItem, listItems } from '../src/services/itemService';
 import { createSupplier, listSuppliers, postPurchase } from '../src/services/purchaseService';
+import { attachPhoto, listPhotos } from '../src/services/photoService';
 import { issueToKitchen } from '../src/services/stockService';
 
 /** Whole-app tests: real screens, real services, in-memory SQLite. */
@@ -281,5 +282,113 @@ describe('stock count', () => {
     await screen.findByTestId('post-count');
     await press('post-count');
     expect(await screen.findByText(/Count at least one item/)).toBeTruthy();
+  });
+});
+
+const ReactTestRenderer_flush = () => new Promise<void>(r => setTimeout(r, 0));
+
+describe('item photos', () => {
+  const camera = () => (globalThis as unknown as { __camera: { permission: boolean; grantOnRequest?: boolean; device: unknown; takePhoto: jest.Mock } }).__camera;
+
+  beforeEach(() => {
+    camera().permission = true;
+    camera().grantOnRequest = false;
+    camera().device = { id: 'back' };
+    camera().takePhoto.mockClear();
+  });
+
+  async function openPhotoScreen() {
+    const id = await createItem(db, { name: 'Rice', baseUnit: 'g' });
+    await open();
+    await press('item-Rice');
+    await screen.findByTestId('add-photo');
+    return id;
+  }
+
+  it('takes a photo, saves it, and shows it on the item and in the list', async () => {
+    const id = await openPhotoScreen();
+    await press('add-photo');
+    expect(await screen.findByTestId('framing-guide')).toBeTruthy();
+    expect(screen.getByText(/One item on a plain surface/)).toBeTruthy();
+    await press('take-photo');
+    await waitFor(async () => expect(await listPhotos(db, id)).toHaveLength(1));
+    const [p] = await listPhotos(db, id);
+    expect(p.isPrimary).toBe(true);
+    expect(p.thumbPath).toMatch(/item-\d+-\d+-thumb\.webp$/);
+    // Back on the item page the photo is shown and the action changes.
+    expect(await screen.findByText('Add another photo')).toBeTruthy();
+    expect(screen.getByTestId('main-photo')).toBeTruthy();
+  });
+
+  it('keeps the camera active until the shot is taken, and ignores a double tap', async () => {
+    const id = await openPhotoScreen();
+    await press('add-photo');
+    let resolveShot!: (v: { path: string }) => void;
+    camera().takePhoto.mockImplementationOnce(() => new Promise(r => (resolveShot = r)));
+    // Not awaited: the handler stays pending until the shot resolves.
+    const firstTap = press('take-photo');
+    await ReactTestRenderer_flush();
+    await press('take-photo'); // second tap while the first is in flight
+    expect(camera().takePhoto).toHaveBeenCalledTimes(1);
+    resolveShot({ path: '/cache/raw.jpg' });
+    await firstTap;
+    await waitFor(async () => expect(await listPhotos(db, id)).toHaveLength(1));
+  });
+
+  it('asks for camera permission first and explains a refusal', async () => {
+    camera().permission = false;
+    await openPhotoScreen();
+    await press('add-photo');
+    expect(await screen.findByText(/Allow the camera to take photos/)).toBeTruthy();
+    await press('allow-camera');
+    expect(await screen.findByText(/permission was not granted/)).toBeTruthy();
+    expect(screen.getByTestId('open-settings')).toBeTruthy();
+    expect(camera().takePhoto).not.toHaveBeenCalled();
+  });
+
+  it('says so when the phone has no camera', async () => {
+    camera().device = undefined;
+    await openPhotoScreen();
+    await press('add-photo');
+    expect(await screen.findByTestId('no-camera')).toBeTruthy();
+  });
+
+  it('shows the failure and keeps the camera usable when saving fails', async () => {
+    const id = await openPhotoScreen();
+    await press('add-photo');
+    camera().takePhoto.mockRejectedValueOnce(new Error('sensor busy'));
+    await press('take-photo');
+    expect(await screen.findByText(/Could not save the photo: sensor busy/)).toBeTruthy();
+    expect(screen.getByTestId('take-photo')).toBeTruthy();
+    expect(await listPhotos(db, id)).toHaveLength(0);
+  });
+
+  it('offers a retry when a photo has no cutout, and explains why it is not ready', async () => {
+    const id = await createItem(db, { name: 'Rice', baseUnit: 'g' });
+    await attachPhoto(db, id, { originalPath: '/p/o1.jpg', cutoutPath: null, thumbPath: '/p/t1.webp', width: 1, height: 1 });
+    await open();
+    await press('item-Rice');
+    expect(await screen.findByTestId('photo-fallback')).toBeTruthy();
+    expect(screen.getByText(/needs internet/)).toBeTruthy();
+    await press('retry-cutout');
+    // No native cutout module under Jest, so the reason is shown, nothing changes.
+    expect(await screen.findByText(/Cutout not ready: The cutout feature is not available/)).toBeTruthy();
+    expect((await listPhotos(db, id))[0].cutoutPath).toBeNull();
+  });
+
+  it('lists a second photo, can make it main, and delete the main photo', async () => {
+    const id = await openPhotoScreen();
+    const files = (n: number) => ({ originalPath: `/p/o${n}.jpg`, cutoutPath: null, thumbPath: `/p/t${n}.webp`, width: 1, height: 1 });
+    const a = await attachPhoto(db, id, files(1));
+    const b = await attachPhoto(db, id, files(2));
+    await screen.unmount();
+    await open();
+    await press('item-Rice');
+    expect(await screen.findByTestId('photo-fallback')).toBeTruthy();
+    await press(`photo-main-${b}`);
+    await waitFor(async () => expect((await listPhotos(db, id))[0].id).toBe(b));
+    await press('delete-photo');
+    await waitFor(async () => expect(await listPhotos(db, id)).toHaveLength(1));
+    expect((await listPhotos(db, id))[0]).toMatchObject({ id: a, isPrimary: true });
   });
 });

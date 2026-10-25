@@ -11,6 +11,7 @@ import { useColors } from '../../src/features/ui';
 import CountScreen from '../screens/CountScreen';
 import ItemDetailScreen from '../screens/ItemDetailScreen';
 import ItemFormScreen from '../screens/ItemFormScreen';
+import PhotoCaptureScreen from '../screens/PhotoCaptureScreen';
 import PurchaseFormScreen from '../screens/PurchaseFormScreen';
 import PurchasesScreen from '../screens/PurchasesScreen';
 import StockActionScreen from '../screens/StockActionScreen';
@@ -87,6 +88,7 @@ export default function RootNavigator() {
         <Stack.Screen name="Tabs" component={Tabs} options={{ headerShown: false }} />
         <Stack.Screen name="ItemForm" component={ItemFormScreen} options={{ title: 'Item' }} />
         <Stack.Screen name="ItemDetail" component={ItemDetailScreen} options={{ title: 'Item' }} />
+        <Stack.Screen name="ItemPhoto" component={PhotoCaptureScreen} options={{ title: 'Photo' }} />
         <Stack.Screen name="StockAction" component={StockActionScreen} options={{ title: 'Stock' }} />
         <Stack.Screen name="PurchaseForm" component={PurchaseFormScreen} options={{ title: 'New purchase' }} />
         <Stack.Screen name="SupplierForm" component={SupplierFormScreen} options={{ title: 'Supplier' }} />

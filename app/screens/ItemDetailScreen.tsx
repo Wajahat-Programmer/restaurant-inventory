@@ -1,9 +1,14 @@
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Card, Divider, Text } from 'react-native-paper';
 import { formatPKR } from '../../src/domain/money';
 import { formatQty } from '../../src/domain/units';
 import { useQuery, useWrite } from '../../src/features/data';
+import { devicePorts } from '../../src/features/photos/devicePorts';
+import { ItemPhoto } from '../../src/features/photos/ItemPhoto';
+import { retryCutout } from '../../src/features/photos/savePhoto';
 import { Body, Btn, ErrorText, Row, StatusBadge, useColors } from '../../src/features/ui';
+import { deletePhoto, listPhotos, setPrimaryPhoto } from '../../src/services/photoService';
 import { getItem, setItemActive } from '../../src/services/itemService';
 import { spacing } from '../../src/theme/tokens';
 import { RootProps } from '../navigation/types';
@@ -18,7 +23,14 @@ export default function ItemDetailScreen({ navigation, route }: RootProps<'ItemD
   const { itemId } = route.params;
   const c = useColors();
   const write = useWrite();
-  const { data: item, error } = useQuery(db => getItem(db, itemId), [itemId]);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const { data, error } = useQuery(async db => ({
+    item: await getItem(db, itemId),
+    photos: await listPhotos(db, itemId),
+  }), [itemId]);
+  const item = data?.item;
+  const photos = data?.photos ?? [];
+  const main = photos.find(p => p.isPrimary);
 
   if (!item) {
     return (
@@ -50,6 +62,73 @@ export default function ItemDetailScreen({ navigation, route }: RootProps<'ItemD
           {!item.isActive && <Text style={{ color: c.warning }}>⚠ Inactive: hidden from the stock list</Text>}
         </Card.Content>
       </Card>
+
+      <View style={styles.photoRow}>
+        <ItemPhoto path={main ? main.cutoutPath ?? main.originalPath : null} size={160} testID="main-photo" />
+        <View style={styles.flex}>
+          <Btn testID="add-photo" mode="contained-tonal" icon="camera" onPress={() => navigation.navigate('ItemPhoto', { itemId })}>
+            {main ? 'Add another photo' : 'Add photo'}
+          </Btn>
+          {main && main.cutoutPath === null && (
+            <>
+              <Text testID="photo-fallback" style={{ color: c.warning }}>
+                ⚠ No cutout yet, showing the plain photo. The cutout model downloads on first use and needs internet.
+              </Text>
+              <Btn
+                testID="retry-cutout"
+                icon="content-cut"
+                onPress={async () => {
+                  setPhotoError(null);
+                  try {
+                    await write(db => retryCutout(db, devicePorts, main));
+                  } catch (e) {
+                    setPhotoError(`Cutout not ready: ${e instanceof Error ? e.message : String(e)}`);
+                  }
+                }}>
+                Retry cutout
+              </Btn>
+            </>
+          )}
+        </View>
+      </View>
+      {photos.length > 1 && (
+        <View style={styles.thumbs}>
+          {photos.map(p => (
+            <View key={p.id} style={styles.thumb} testID={`photo-${p.id}`}>
+              <ItemPhoto path={p.thumbPath} size={72} />
+              <Text style={{ color: c.textSecondary }}>{p.isPrimary ? '★ Main' : ''}</Text>
+              {!p.isPrimary && (
+                <Btn
+                  testID={`photo-main-${p.id}`}
+                  compact
+                  onPress={async () => {
+                    await write(db => setPrimaryPhoto(db, p.id));
+                  }}>
+                  Make main
+                </Btn>
+              )}
+            </View>
+          ))}
+        </View>
+      )}
+      {photos.length > 0 && (
+        <Btn
+          testID="delete-photo"
+          textColor={c.danger}
+          onPress={async () => {
+            setPhotoError(null);
+            const target = main ?? photos[0];
+            const res = await write(db => deletePhoto(db, target.id));
+            if (res.ok) {
+              await Promise.all(res.value.map(f => devicePorts.remove(f).catch(() => undefined)));
+            } else {
+              setPhotoError(res.error);
+            }
+          }}>
+          Delete main photo
+        </Btn>
+      )}
+      <ErrorText message={photoError} />
 
       <Row>
         <Btn testID="act-issue" mode="contained" onPress={() => navigation.navigate('StockAction', { itemId, kind: 'issue' })}>
@@ -101,6 +180,9 @@ export default function ItemDetailScreen({ navigation, route }: RootProps<'ItemD
 
 const styles = StyleSheet.create({
   gap: { gap: spacing.sm },
+  photoRow: { flexDirection: 'row', gap: spacing.md, alignItems: 'center' },
+  thumbs: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  thumb: { alignItems: 'center' },
   flex: { flex: 1 },
   right: { alignItems: 'flex-end' },
   mov: { flexDirection: 'row', paddingVertical: spacing.sm },

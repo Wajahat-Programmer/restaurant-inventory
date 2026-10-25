@@ -1,0 +1,39 @@
+appId: com.restaurantinventory
+name: Take an item photo with the camera
+---
+- launchApp:
+    clearState: true
+    permissions:
+      camera: allow
+- extendedWaitUntil:
+    visible:
+      id: "tab-stock"
+    timeout: 120000
+- runFlow:
+    file: ../e2e-shared/add-item.yaml
+    env:
+      NAME: Rice
+      QTY: "1000"
+      COST: "100"
+- tapOn:
+    id: "item-Rice"
+- assertVisible: "Add photo"
+- tapOn:
+    id: "add-photo"
+- extendedWaitUntil:
+    visible:
+      id: "take-photo"
+    timeout: 20000
+- assertVisible:
+    id: "framing-guide"
+- tapOn:
+    id: "take-photo"
+# Resize, cutout and thumbnail run on-device; allow time for the model.
+- extendedWaitUntil:
+    visible: "Add another photo"
+    timeout: 90000
+- assertVisible:
+    id: "main-photo"
+- back
+- assertVisible:
+    id: "thumb-Rice"

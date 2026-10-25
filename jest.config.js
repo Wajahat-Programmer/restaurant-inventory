@@ -1,7 +1,7 @@
 module.exports = {
   preset: '@react-native/jest-preset',
   transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|@react-navigation|react-native-paper|react-native-vector-icons|@react-native-vector-icons|@shopify/flash-list|react-native-screens|react-native-safe-area-context)/)',
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|@react-navigation|react-native-paper|react-native-vector-icons|@react-native-vector-icons|@shopify/flash-list|react-native-screens|react-native-safe-area-context|react-native-vision-camera|@bam.tech|@dr.pogodin)/)',
   ],
   setupFiles: ['<rootDir>/jest.setup.js'],
   collectCoverageFrom: ['src/domain/**/*.ts', '!**/*.test.ts'],

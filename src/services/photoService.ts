@@ -98,3 +98,24 @@ export async function deletePhoto(db: Db, photoId: number): Promise<string[]> {
     return [p.originalPath, p.cutoutPath, p.thumbPath].filter((x): x is string => !!x);
   });
 }
+
+/**
+ * Adds a cutout to a photo that was saved without one. Returns the old
+ * thumbnail path so the caller can delete that file.
+ */
+export async function setCutout(
+  db: Db,
+  photoId: number,
+  cutoutPath: string,
+  thumbPath: string,
+): Promise<string> {
+  return inTransaction(db, async tx => {
+    const [p] = await tx.select().from(itemPhotos).where(eq(itemPhotos.id, photoId));
+    must(p, 'Photo not found');
+    if (p.cutoutPath) {
+      throw new ValidationError('This photo already has a cutout');
+    }
+    await tx.update(itemPhotos).set({ cutoutPath, thumbPath }).where(eq(itemPhotos.id, photoId));
+    return p.thumbPath;
+  });
+}

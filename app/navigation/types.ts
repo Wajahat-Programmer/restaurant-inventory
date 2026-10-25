@@ -14,6 +14,7 @@ export type RootStackParamList = {
   Tabs: NavigatorScreenParams<TabParamList>;
   ItemForm: { itemId?: number } | undefined;
   ItemDetail: { itemId: number };
+  ItemPhoto: { itemId: number };
   StockAction: { itemId: number; kind: StockActionKind };
   PurchaseForm: undefined;
   SupplierForm: { supplierId?: number } | undefined;

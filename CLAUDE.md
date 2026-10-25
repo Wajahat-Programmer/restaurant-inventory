@@ -3,7 +3,7 @@
 Offline-only Android app for a small food business: stock, costs, in/out, forecasts. Spec: `Restaurant Inventory App — Development Plan.md` (Downloads). Feature specs live in `specs/`.
 
 ## Stack
-React Native CLI 0.88 (bare, TypeScript strict, New Architecture, Hermes), Android only. Installed: op-sqlite + Drizzle (sqlite-proxy driver), React Navigation, React Native Paper, Zustand, React Hook Form + Zod, FlashList. Not yet installed: vision-camera, image-resizer, Notifee, Victory. Testing: Jest, React Native Testing Library, Maestro.
+React Native CLI 0.88 (bare, TypeScript strict, New Architecture, Hermes), Android only. Installed: op-sqlite + Drizzle (sqlite-proxy driver), React Navigation, React Native Paper, Zustand, React Hook Form + Zod, FlashList. Photos: react-native-vision-camera 4 (v5 needs two extra Nitro packages), image-resizer, @dr.pogodin/react-native-fs, plus our Kotlin ML Kit module. Not yet installed: Notifee, Victory. Testing: Jest, React Native Testing Library, Maestro.
 
 **No new dependency without asking.**
 
@@ -14,6 +14,8 @@ src/domain/             pure TS: ledger, units, purchasing, stock status, photos
 src/db/                 schema.ts, migrations/ (drizzle-kit), client.ts (proxy driver, migrate, inTransaction), opsqlite.ts (the only native import), testing.ts (better-sqlite3)
 src/services/           every write: one transaction each, all stock changes via ledgerService.postMovement
 src/features/           hooks (useQuery/useWrite), shared ui, form schemas per module
+src/native/             TurboModule specs (codegen); Kotlin in android/app/src/main/java/com/restaurantinventory/cutout/
+src/features/photos/    pipeline (pure, injected ports), device ports, camera helpers
 src/theme/tokens.ts     the only place colours live (ESLint blocks raw hex elsewhere)
 specs/                  one spec per feature
 e2e/                    Maestro flows (top level only); e2e-shared/ helper flows
@@ -40,6 +42,8 @@ e2e/                    Maestro flows (top level only); e2e-shared/ helper flows
 - Edge-to-edge Android does not resize for the keyboard: screens use `Body` (KeyboardAvoidingView).
 - RNTL 14: `render`, `fireEvent`, `unmount` are async; always `await`.
 - Restart Metro with `--reset-cache` after installing packages.
+- ML Kit cutout needs its model from Google Play services. On an emulator with no Google account it never downloads ("Waiting for the subject segmentation optional module"); the app then keeps the plain photo and offers Retry cutout. Verify real cutouts on a phone with Play services and internet.
+- Camera: keep `isActive` true until `takePhoto` returns, or it fails with "Camera is closed".
 - Every Maestro flow and subflow needs an `appId` header. A flow that always clears state cannot catch persistence bugs: keep `06-persistence`.
 
 ## Commands

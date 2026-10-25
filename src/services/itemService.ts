@@ -26,6 +26,8 @@ export interface ItemRow {
   reorderPoint: number;
   status: StockStatus;
   isActive: boolean;
+  /** Primary photo thumbnail, if any. */
+  thumbPath: string | null;
 }
 
 export function parseItem(input: ItemInput): ItemData {
@@ -164,6 +166,7 @@ function toRow(r: {
   parLevel: number;
   reorderPoint: number;
   isActive: boolean;
+  thumbPath: string | null;
 }): ItemRow {
   const level = { qtyBase: r.qtyBase ?? 0, valuePaisa: r.valuePaisa ?? 0 };
   return {
@@ -204,10 +207,15 @@ export async function listItems(
       parLevel: items.parLevel,
       reorderPoint: items.reorderPoint,
       isActive: items.isActive,
+      thumbPath: schema.itemPhotos.thumbPath,
     })
     .from(items)
     .leftJoin(categories, eq(items.categoryId, categories.id))
     .leftJoin(stockLevels, eq(stockLevels.itemId, items.id))
+    .leftJoin(
+      schema.itemPhotos,
+      and(eq(schema.itemPhotos.itemId, items.id), eq(schema.itemPhotos.isPrimary, true)),
+    )
     .where(filters.length ? and(...filters) : undefined)
     .orderBy(items.name);
   return rows.map(toRow);
@@ -248,10 +256,15 @@ export async function getItem(db: Queryable, id: number): Promise<ItemDetail> {
       isActive: items.isActive,
       shelfLifeDays: items.shelfLifeDays,
       barcode: items.barcode,
+      thumbPath: schema.itemPhotos.thumbPath,
     })
     .from(items)
     .leftJoin(categories, eq(items.categoryId, categories.id))
     .leftJoin(stockLevels, eq(stockLevels.itemId, items.id))
+    .leftJoin(
+      schema.itemPhotos,
+      and(eq(schema.itemPhotos.itemId, items.id), eq(schema.itemPhotos.isPrimary, true)),
+    )
     .where(eq(items.id, id));
   must(row, 'Item not found');
 
