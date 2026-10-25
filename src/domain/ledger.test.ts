@@ -61,10 +61,14 @@ describe('ledger', () => {
     expect(replay([inn(1000, 10), out, reverse(out)]).qtyBase).toBe(1000);
   });
 
-  it('reversing an IN removes the stock and keeps the average', () => {
-    const buy = inn(1000, 10);
-    const lvl = replay([buy, reverse(buy)]);
-    expect(lvl.qtyBase).toBe(0);
+  it('reversing an IN removes its stock and restores the earlier average', () => {
+    const first = inn(1000, 10);
+    const second = inn(1000, 20);
+    expect(replay([first, reverse(first)])).toEqual(EMPTY_LEVEL);
+    expect(replay([first, second, reverse(first)])).toEqual({
+      qtyBase: 1000,
+      avgCostPaisa: 20,
+    });
   });
 
   it('cannot reverse an IN after the stock was used', () => {

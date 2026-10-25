@@ -34,7 +34,7 @@ function validate(m: Movement): void {
   if (!m.isReversal && OUTFLOW.has(m.type) && m.qtyBase > 0) {
     throw new RangeError(`${m.type} movements must be negative`);
   }
-  if (m.type === 'IN' && !m.isReversal) {
+  if (m.type === 'IN') {
     assertPaisa(m.unitCostPaisa);
     if (m.unitCostPaisa < 0) {
       throw new RangeError('Unit cost cannot be negative');
@@ -54,8 +54,12 @@ export function applyMovement(level: StockLevel, m: Movement): StockLevel {
       `Insufficient stock: have ${level.qtyBase}, movement ${m.qtyBase}`,
     );
   }
-  if (m.type !== 'IN' || m.isReversal) {
+  if (m.type !== 'IN') {
     return { qtyBase: qty, avgCostPaisa: level.avgCostPaisa };
+  }
+  // Also inverts a reversed IN: a negative qty at the original cost.
+  if (qty === 0) {
+    return EMPTY_LEVEL;
   }
   const total = level.qtyBase * level.avgCostPaisa + m.qtyBase * m.unitCostPaisa;
   return { qtyBase: qty, avgCostPaisa: Math.round(total / qty) };

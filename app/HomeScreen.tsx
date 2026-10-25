@@ -22,6 +22,9 @@ import {
   spacing,
 } from '../src/theme/tokens';
 
+/** Demo par level (g) until items carry their own. */
+const LOW_STOCK_G = 500;
+
 const RICE_IN: Movement = {
   itemId: 'rice',
   type: 'IN',
@@ -55,7 +58,7 @@ export default function HomeScreen() {
     error: null,
   });
 
-  const low = level.qtyBase < 500;
+  const low = level.qtyBase < LOW_STOCK_G;
 
   return (
     <ScrollView

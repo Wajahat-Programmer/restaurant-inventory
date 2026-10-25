@@ -8,10 +8,6 @@ export function assertPaisa(value: number): Paisa {
   return value;
 }
 
-export function rupeesToPaisa(rupees: number): Paisa {
-  return Math.round(rupees * 100);
-}
-
 /** Formats paisa as "Rs 1,234.50". Integer math only, so no float drift. */
 export function formatPKR(paisa: Paisa): string {
   assertPaisa(paisa);

@@ -77,3 +77,6 @@ yarn-error.log
 # QA output
 coverage/
 qa-report/
+
+# Graphify output (regenerate with: graphify update .)
+graphify-out/

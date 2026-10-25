@@ -1,4 +1,4 @@
-import { formatPKR, rupeesToPaisa } from './money';
+import { formatPKR } from './money';
 
 describe('money', () => {
   it('formats paisa with grouping', () => {
@@ -9,9 +9,5 @@ describe('money', () => {
 
   it('rejects floats', () => {
     expect(() => formatPKR(10.5)).toThrow('integer paisa');
-  });
-
-  it('converts rupees to integer paisa', () => {
-    expect(rupeesToPaisa(19.99)).toBe(1999);
   });
 });

@@ -19,9 +19,9 @@
 ## Acceptance (all covered in `ledger.test.ts` and `__tests__/App.test.tsx`)
 - Weighted average of 1000 g @ 10 and 1000 g @ 20 is 15.
 - Issue greater than stock is rejected with "Insufficient stock".
-- Reversal of an ISSUE restores quantity; reversal of an IN after the stock was used is rejected.
+- Reversal of an ISSUE restores quantity; reversal of an IN restores the earlier average, and is rejected if the stock was already used.
 - Money must be integer paisa; floats throw.
 
 ## Known limits (to settle in the Drizzle/DB spec)
-- Reversing an IN leaves the weighted average unchanged; a precise recost needs the full history and is deferred.
+- Reversing an IN inverts the weighted average at the original cost (exact up to integer rounding of paisa).
 - Quantities are plain numbers; decide on integer base units vs decimals before purchase pack conversions land.

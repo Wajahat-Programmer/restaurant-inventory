@@ -1,0 +1,4 @@
+node_modules/
+android/
+coverage/
+graphify-out/cache/
