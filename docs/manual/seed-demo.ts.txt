@@ -93,7 +93,8 @@ it('seeds the demo restaurant', async () => {
         if (i >= 21 && it.name === 'Tea leaves') factor = 0.5;
         const qty = Math.ceil(usageOver(it.name, i, 3) * factor);
         if (qty <= 0) continue;
-        (bySupplier[it.supplier] ??= []).push({ itemId: ids[it.name], qtyBase: qty, totalPaisa: qty * it.price });
+        const price = i >= 24 && it.name === 'Chicken' ? Math.round(it.price * 1.14) : it.price; // the poultry man put his price up
+        (bySupplier[it.supplier] ??= []).push({ itemId: ids[it.name], qtyBase: qty, totalPaisa: qty * price });
       }
       for (const [name, lines] of Object.entries(bySupplier)) {
         const total = lines.reduce((a, l) => a + l.totalPaisa, 0);
@@ -103,6 +104,7 @@ it('seeds the demo restaurant', async () => {
         await postPurchase(db, { supplierId: sup[name], date, lines, paidPaisa: paid });
       }
     }
+    if (i === 12) await postPurchase(db, { supplierId: sup['Metro Cash & Carry'], date, lines: [{ itemId: ids['Basmati rice'], qtyBase: 5000, totalPaisa: 5000 * 27 }], paidPaisa: 5000 * 27 });
     for (const [k, d] of DISHES.entries()) {
       let qty = planned(i, d.perDay, k);
       while (qty > 0) {

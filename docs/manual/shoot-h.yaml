@@ -1,0 +1,60 @@
+appId: com.restaurantinventory
+name: Manual screenshots, part H (price alerts, orders by supplier, dish performance, wastage details)
+---
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "tab-stock"
+    timeout: 90000
+- tapOn:
+    id: "guide-dismiss"
+    optional: true
+- tapOn:
+    id: "tab-more"
+- extendedWaitUntil:
+    visible:
+      id: "menu-forecast"
+    timeout: 15000
+- tapOn:
+    id: "menu-forecast"
+- extendedWaitUntil:
+    visible: "Needs attention"
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: 20-forecast
+- scroll
+- takeScreenshot: 20c-forecast-orders
+- scroll
+- takeScreenshot: 20d-forecast-orders2
+- back
+- tapOn:
+    id: "menu-reports"
+- extendedWaitUntil:
+    visible:
+      id: "pnl-net"
+    timeout: 15000
+- scroll
+- scroll
+- takeScreenshot: 19d-reports-deeper
+- scroll
+- scroll
+- scroll
+- tapOn:
+    id: "open-dish-performance"
+- extendedWaitUntil:
+    visible: "Sales and profit per dish.*"
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: 46-dish-performance
+- scroll
+- takeScreenshot: 46b-dish-performance-lower
+- back
+- scroll
+- tapOn:
+    id: "open-wastage"
+- extendedWaitUntil:
+    visible:
+      id: "wastage-total"
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: 47-wastage-details

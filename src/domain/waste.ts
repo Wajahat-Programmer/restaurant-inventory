@@ -45,7 +45,8 @@ function group(rows: WasteRow[], key: (r: WasteRow) => string, withQty: boolean)
 /** Where the money thrown away went: by reason and by item, biggest first. */
 export function wasteBreakdown(rows: WasteRow[]): WasteBreakdown {
   return {
-    byReason: group(rows, r => r.reason ?? 'No reason given', false),
+    // A stored reason can carry the note after a colon ("burnt: Burnt pot"); group by the reason alone.
+    byReason: group(rows, r => r.reason?.split(':')[0].trim() || 'No reason given', false),
     byItem: group(rows, r => r.item, true),
   };
 }

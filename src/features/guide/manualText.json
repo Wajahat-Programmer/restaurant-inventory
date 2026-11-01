@@ -153,6 +153,8 @@
         "Stock valuation: what the stock on your shelves is worth right now, by category.",
         "Supplier spend: how much you bought from each supplier in the period."
       ] },
+      { "type": "h", "text": "Dish performance and Wastage details" },
+      { "type": "p", "text": "Under Dig deeper in Reports. Dish performance shows, for each dish, the portions sold, the sales and the profit per portion, and puts it in a group: Star (sells well and earns well), Plowhorse (sells well, earns little), Puzzle (earns well, sells slowly) or Dog (neither). A Price tip appears for dishes earning less than a 65% profit: the price that would give that profit. Wastage details adds up what was thrown away by reason and by item, biggest first." },
       { "type": "h", "text": "Share as PDF" },
       { "type": "p", "text": "At the bottom of Reports, tap Profit and loss, Stock valuation or Wastage under Share as PDF. The app makes an A4 PDF and opens the Android share sheet so you can send it by WhatsApp or email, or save it to the phone." }
     ]
@@ -166,11 +168,12 @@
       { "type": "list", "items": [
         "Needs attention: items that are Low or Out, items close to expiry, unusual usage (a day far above normal), and wastage spikes.",
         "Days left: how many days each item will last at the recent rate of use.",
-        "What to order: a suggested quantity that covers your lead time plus a safety margin.",
+        "Price alerts: an item whose last purchase cost at least 10% more than its usual price.",
+        "What to order: a suggested quantity that covers your lead time plus a safety margin, split into one card per supplier with an estimated cost.",
         "Sales, next 7 days and Expenses per month: a simple outlook for money."
       ] },
       { "type": "h", "text": "Share the shopping list" },
-      { "type": "p", "text": "Review the suggested quantities, change any you disagree with, then tap Share shopping list to send it to a supplier on WhatsApp." },
+      { "type": "p", "text": "Each item is listed under the supplier you bought it from most recently. Untick anything you do not want, then tap Share with that supplier to send their list on WhatsApp. If another supplier charged at least 10% less last time, a line under the item says so." },
       { "type": "h", "text": "How trustworthy is it?" },
       { "type": "p", "text": "A forecast is shown only when there are at least 14 days of history and it has been accurate when tested against your own past days. Before that the app falls back to a plain recent average and says so. In Settings you can change the ordering days: lead days (how long a delivery takes) and review days (how often you order)." },
       { "type": "tip", "text": "Alerts also arrive as a phone notification once a day, so you do not have to open the app to hear about low stock." }

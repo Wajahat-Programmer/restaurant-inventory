@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Card, Text } from 'react-native-paper';
 import { formatPct } from '../../src/domain/finance';
-import { DISH_CLASS_ADVICE, DISH_CLASS_LABEL } from '../../src/domain/menu';
+import { DISH_CLASS_LABEL, dishAdvice } from '../../src/domain/menu';
 import { formatPKR } from '../../src/domain/money';
 import { periodRange } from '../../src/domain/periods';
 import { useQuery } from '../../src/features/data';
@@ -42,7 +42,7 @@ export default function DishPerformanceScreen() {
               label={r.qty > 0 ? 'Profit per portion' : 'Profit per portion (at today cost)'}
               value={`${formatPKR(r.unitMarginPaisa)} (${formatPct(r.marginPct)})`}
             />
-            {r.dishClass && <Text style={{ color: c.textSecondary }}>{DISH_CLASS_ADVICE[r.dishClass]}</Text>}
+            {r.dishClass && <Text style={{ color: c.textSecondary }}>{dishAdvice(r.dishClass, r.marginPct, TARGET_MARGIN_PCT)}</Text>}
             {r.qty === 0 && <Text style={{ color: c.textSecondary }}>No sales in this period.</Text>}
             {r.suggestedPricePaisa !== null && (
               <Text testID={`dish-tip-${r.name}`} style={{ color: c.warning }}>

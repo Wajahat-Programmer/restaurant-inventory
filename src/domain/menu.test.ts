@@ -1,4 +1,4 @@
-import { classifyDishes, priceForMargin, unitMargin } from './menu';
+import { classifyDishes, DISH_CLASS_ADVICE, dishAdvice, priceForMargin, unitMargin } from './menu';
 
 // qty, revenue (Rs), cost (Rs) for each dish, in paisa.
 const d = (name: string, qty: number, revenue: number, cogs: number) => ({ name, qty, revenuePaisa: revenue * 100, cogsPaisa: cogs * 100 });
@@ -32,6 +32,18 @@ describe('classifyDishes', () => {
   it('a dish exactly at the average profit counts as profitable', () => {
     // Both earn Rs 100 per portion.
     expect(classes([d('A', 10, 2000, 1000), d('B', 10, 3000, 2000)])).toEqual({ A: 'star', B: 'star' });
+  });
+});
+
+describe('dishAdvice', () => {
+  it('gives the standard advice, unless a low earner already keeps a healthy share of its price', () => {
+    expect(dishAdvice('star', 40, 65)).toBe(DISH_CLASS_ADVICE.star);
+    expect(dishAdvice('puzzle', 90, 65)).toBe(DISH_CLASS_ADVICE.puzzle);
+    expect(dishAdvice('plowhorse', 40, 65)).toBe(DISH_CLASS_ADVICE.plowhorse);
+    expect(dishAdvice('plowhorse', null, 65)).toBe(DISH_CLASS_ADVICE.plowhorse);
+    expect(dishAdvice('plowhorse', 93, 65)).toContain('Keep it');
+    expect(dishAdvice('dog', 70, 65)).toContain('Cheap to keep');
+    expect(dishAdvice('dog', 30, 65)).toBe(DISH_CLASS_ADVICE.dog);
   });
 });
 

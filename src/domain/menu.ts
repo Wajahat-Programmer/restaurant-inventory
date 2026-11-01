@@ -16,6 +16,22 @@ export const DISH_CLASS_ADVICE: Record<DishClass, string> = {
   dog: 'Sells slowly and earns little. Think about dropping it.',
 };
 
+/**
+ * What to do about a dish. A dish that earns little per portion in rupees but
+ * already keeps a healthy share of its price (a cup of tea) is not told to
+ * raise its price or to go.
+ */
+export function dishAdvice(dishClass: DishClass, marginPct: number | null, targetPct: number): string {
+  const healthy = marginPct !== null && marginPct >= targetPct;
+  if (dishClass === 'plowhorse' && healthy) {
+    return 'Sells well and keeps a healthy share of its price. Each portion is small money, but the volume pays. Keep it.';
+  }
+  if (dishClass === 'dog' && healthy) {
+    return 'Sells slowly and each portion earns little, but it keeps a healthy share of its price. Cheap to keep.';
+  }
+  return DISH_CLASS_ADVICE[dishClass];
+}
+
 export interface DishSales {
   qty: number;
   revenuePaisa: Paisa;

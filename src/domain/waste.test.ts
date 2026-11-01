@@ -21,6 +21,11 @@ describe('wasteBreakdown', () => {
     ].sort((a, b) => (b[1] as number) - (a[1] as number)));
   });
 
+  it('groups by the reason alone when the note is stored after it', () => {
+    const { byReason } = wasteBreakdown([w('Rice', 800, 25000, 'burnt: Burnt pot'), w('Rice', 100, 3000, 'burnt'), w('Tomato', 2000, 22000, 'spoiled: Soft tomatoes'), w('Milk', 1, 100, ': odd')]);
+    expect(byReason.map(g => [g.label, g.count])).toEqual([['burnt', 2], ['spoiled', 1], ['No reason given', 1]]);
+  });
+
   it('adds up by item with the quantity thrown away', () => {
     const { byItem } = wasteBreakdown(rows);
     expect(byItem[0]).toMatchObject({ label: 'Chicken', count: 2, qtyBase: 800, valuePaisa: 48000, baseUnit: 'g', sharePct: 68.6 });

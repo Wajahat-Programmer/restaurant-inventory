@@ -1,0 +1,32 @@
+appId: com.restaurantinventory
+name: Dish performance and wastage details open from Reports, and are calm with no data
+---
+- runFlow: ../e2e-shared/launch.yaml
+- tapOn:
+    id: "tab-more"
+- tapOn:
+    id: "menu-reports"
+- extendedWaitUntil:
+    visible:
+      id: "pnl-net"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "open-dish-performance"
+- tapOn:
+    id: "open-dish-performance"
+- extendedWaitUntil:
+    visible:
+      id: "no-dishes"
+    timeout: 15000
+- back
+- scrollUntilVisible:
+    element:
+      id: "open-wastage"
+- tapOn:
+    id: "open-wastage"
+- extendedWaitUntil:
+    visible:
+      id: "no-wastage"
+    timeout: 15000
+- assertVisible: ".*Nothing was thrown away.*"
