@@ -184,7 +184,7 @@ if (!browser) {
 }
 const startedAt = Date.now() - 1000;
 const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'um-'));
-const r = spawnSync(
+spawnSync(
   browser,
   ['--headless=new', '--disable-gpu', `--user-data-dir=${profile}`, '--no-pdf-header-footer', `--print-to-pdf=${pdfPath}`, `file:///${htmlPath.replace(/\\/g, '/')}`],
   { stdio: 'inherit', timeout: 240000 },

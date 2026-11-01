@@ -1,3 +1,4 @@
+import { useTourTarget } from '../../src/features/guide/TourTarget';
 import { FlashList } from '@shopify/flash-list';
 import { StyleSheet, View } from 'react-native';
 import { Card, FAB, Text } from 'react-native-paper';
@@ -17,6 +18,7 @@ const PAYMENT_LABEL = { PAID: '✓ Paid', PARTIAL: '⚠ Part paid', CREDIT: '⚠
 export default function PurchasesScreen() {
   const nav = useRootNav();
   const c = useColors();
+  const fabRef = useTourTarget('fab-add-purchase');
   const write = useWrite();
   const [error, setError] = useState<string | null>(null);
   const { data, loading, error: loadError } = useQuery(async db => ({
@@ -72,6 +74,7 @@ export default function PurchasesScreen() {
         )}
       />
       <FAB
+        ref={fabRef}
         testID="fab-add-purchase"
         icon="plus"
         label="Purchase"

@@ -4,11 +4,13 @@ import {
   DefaultTheme,
   NavigationContainer,
   Theme,
+  useNavigationContainerRef,
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Icon, useTheme } from 'react-native-paper';
 import { AutoChecks } from '../../src/features/AutoChecks';
 import { useAuth } from '../../src/features/auth/AuthProvider';
+import { TourProvider } from '../../src/features/guide/TourProvider';
 import { useColors } from '../../src/features/ui';
 import AuditScreen from '../screens/AuditScreen';
 import CashBookScreen from '../screens/CashBookScreen';
@@ -17,6 +19,7 @@ import ExpenseFormScreen from '../screens/ExpenseFormScreen';
 import DataScreen from '../screens/DataScreen';
 import ExpensesScreen from '../screens/ExpensesScreen';
 import ForecastScreen from '../screens/ForecastScreen';
+import HelpScreen from '../screens/HelpScreen';
 import HomeScreen from '../screens/HomeScreen';
 import ItemDetailScreen from '../screens/ItemDetailScreen';
 import ItemFormScreen from '../screens/ItemFormScreen';
@@ -70,6 +73,7 @@ function Tabs() {
 export default function RootNavigator() {
   const c = useColors();
   const { locked } = useAuth();
+  const navRef = useNavigationContainerRef<RootStackParamList>();
   const base = useTheme().dark ? DarkTheme : DefaultTheme;
   const theme: Theme = {
     ...base,
@@ -83,7 +87,8 @@ export default function RootNavigator() {
     },
   };
   return (
-    <NavigationContainer theme={theme}>
+    <NavigationContainer theme={theme} ref={navRef}>
+      <TourProvider navRef={navRef}>
       <Stack.Navigator
         screenOptions={{
           headerStyle: { backgroundColor: c.primary },
@@ -112,12 +117,14 @@ export default function RootNavigator() {
             <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
             <Stack.Screen name="Security" component={SecurityScreen} options={{ title: 'PIN lock and people' }} />
             <Stack.Screen name="Data" component={DataScreen} options={{ title: 'Export, import, backup' }} />
+            <Stack.Screen name="Help" component={HelpScreen} options={{ title: 'Help and manual' }} />
             <Stack.Screen name="Audit" component={AuditScreen} options={{ title: 'Who did what' }} />
             <Stack.Screen name="SupplierForm" component={SupplierFormScreen} options={{ title: 'Supplier' }} />
             <Stack.Screen name="SupplierDetail" component={SupplierDetailScreen} options={{ title: 'Supplier' }} />
           </>
         )}
       </Stack.Navigator>
+      </TourProvider>
       {!locked && <AutoChecks />}
     </NavigationContainer>
   );

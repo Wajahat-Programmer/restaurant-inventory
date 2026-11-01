@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Icon, Text } from 'react-native-paper';
+import { TourTarget } from '../../src/features/guide/TourTarget';
 import { Body, useColors } from '../../src/features/ui';
 import { allowed } from '../../src/services/session';
 import { Permission } from '../../src/domain/auth';
@@ -15,6 +16,7 @@ const MENU: { key: string; title: string; hint: string; icon: string; to: keyof 
   { key: 'cashbook', title: 'Cash book', hint: 'Money in and out, with balances', icon: 'book-open-variant', to: 'CashBook', needs: 'finance' },
   { key: 'suppliers', title: 'Suppliers', hint: 'Who you buy from and what you owe', icon: 'truck', to: 'Suppliers', needs: 'record' },
   { key: 'count', title: 'Stock count', hint: 'Count the shelves and fix differences', icon: 'clipboard-check', to: 'Count', needs: 'record' },
+  { key: 'help', title: 'Help and manual', hint: 'Guided tour, step-by-step manual, PDF', icon: 'help-circle-outline', to: 'Help', needs: 'record' },
   { key: 'settings', title: 'Settings', hint: 'Theme, updates, PIN lock, backup, export and import', icon: 'cog', to: 'Settings', needs: 'manage' },
 ];
 
@@ -23,6 +25,7 @@ export default function MoreScreen() {
   const nav = useRootNav();
   return (
     <Body>
+      <TourTarget id="more-list" style={styles.list}>
       {MENU.filter(m => allowed(m.needs)).map(m => (
         <Pressable
           key={m.key}
@@ -38,11 +41,13 @@ export default function MoreScreen() {
           <Icon source="chevron-right" size={24} color={c.textSecondary} />
         </Pressable>
       ))}
+      </TourTarget>
     </Body>
   );
 }
 
 const styles = StyleSheet.create({
+  list: { gap: spacing.md },
   row: {
     minHeight: MIN_TOUCH_TARGET,
     flexDirection: 'row',

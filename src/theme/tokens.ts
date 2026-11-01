@@ -49,6 +49,9 @@ export const colors: Record<ThemeMode, Colors> = {
   },
 };
 
+/** The dark layer behind overlays such as the guided tour. */
+export const scrim = 'rgba(0, 0, 0, 0.65)';
+
 /** 8 dp grid. */
 export const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 } as const;
 

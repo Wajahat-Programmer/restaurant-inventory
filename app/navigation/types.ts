@@ -32,6 +32,7 @@ export type RootStackParamList = {
   Security: undefined;
   Data: undefined;
   Audit: undefined;
+  Help: undefined;
   Lock: undefined;
   SupplierForm: { supplierId?: number } | undefined;
   SupplierDetail: { supplierId: number };

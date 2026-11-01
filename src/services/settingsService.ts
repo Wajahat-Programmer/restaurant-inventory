@@ -19,6 +19,7 @@ export const SETTING_DEFAULTS = {
   'drive.enabled': '0',
   'drive.account': '',
   'drive.lastOkAt': '',
+  'guide.seen': '0',
   'alerts.lastNotified': '',
   'backup.warnedOn': '',
 } as const;

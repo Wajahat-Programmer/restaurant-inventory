@@ -1,14 +1,17 @@
 import { Card, Text } from 'react-native-paper';
+import { useTour } from '../../src/features/guide/TourProvider';
+import { TourTarget } from '../../src/features/guide/TourTarget';
 import { formatPct } from '../../src/domain/finance';
 import { formatPKR } from '../../src/domain/money';
 import { periodRange } from '../../src/domain/periods';
-import { useQuery } from '../../src/features/data';
+import { useQuery, useWrite } from '../../src/features/data';
 import { installedVersion } from '../../src/features/update/devicePorts';
 import { knownUpdate } from '../../src/features/update/updateController';
 import { Body, Btn, ErrorText, Line, Row, todayISO, useColors } from '../../src/features/ui';
 import { alerts } from '../../src/services/forecastService';
 import { dashboard } from '../../src/services/reportService';
 import { allowed } from '../../src/services/session';
+import { getSetting, setSetting } from '../../src/services/settingsService';
 import { useRootNav } from '../navigation/useRootNav';
 
 export default function HomeScreen() {
@@ -17,12 +20,15 @@ export default function HomeScreen() {
   const today = todayISO();
   const seesMoney = allowed('finance');
   const canManage = allowed('manage');
+  const tour = useTour();
+  const write = useWrite();
 
   const { data, error } = useQuery(
     async db => ({
       d: seesMoney ? await dashboard(db, today, periodRange('month', today)) : null,
       alerts: await alerts(db, today),
       update: canManage ? await knownUpdate(db, await installedVersion()) : null,
+      showGuide: (await getSetting(db, 'guide.seen')) === '0',
     }),
     [today, seesMoney, canManage],
   );
@@ -46,6 +52,24 @@ export default function HomeScreen() {
         </Card>
       )}
 
+      {data?.showGuide && (
+        <Card testID="guide-offer">
+          <Card.Content>
+            <Text variant="titleMedium">New here? Take the two-minute tour</Text>
+            <Text style={{ color: c.textSecondary }}>It shows where everything is. The manual is always under More, then Help and manual.</Text>
+            <Row>
+              <Btn testID="guide-start" mode="contained" icon="map-marker-path" onPress={() => tour.start()}>
+                Start the tour
+              </Btn>
+              <Btn testID="guide-dismiss" onPress={() => write(conn => setSetting(conn, 'guide.seen', '1'))}>
+                Not now
+              </Btn>
+            </Row>
+          </Card.Content>
+        </Card>
+      )}
+
+      <TourTarget id="home-actions">
       <Row>
         <Btn testID="home-enter-sales" mode="contained" icon="cash-plus" onPress={() => nav.navigate('SalesEntry')}>
           Enter sales
@@ -56,7 +80,9 @@ export default function HomeScreen() {
           </Btn>
         )}
       </Row>
+      </TourTarget>
 
+      <TourTarget id="home-alerts">
       <Card testID="home-alerts">
         <Card.Content>
           <Text variant="titleMedium">Needs attention</Text>
@@ -76,6 +102,7 @@ export default function HomeScreen() {
           </Btn>
         </Card.Content>
       </Card>
+      </TourTarget>
 
       {seesMoney && (
         <>

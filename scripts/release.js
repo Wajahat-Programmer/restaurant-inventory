@@ -39,7 +39,8 @@ const run = (cmd, cmdArgs, opts = {}) => {
   }
 };
 const out = (cmd, cmdArgs, opts = {}) => {
-  const r = spawnSync(cmd, cmdArgs, { cwd: root, encoding: 'utf8', shell: process.platform === 'win32', ...opts });
+  const useShell = process.platform === 'win32' && cmd !== 'git';
+  const r = spawnSync(cmd, cmdArgs, { cwd: root, encoding: 'utf8', shell: useShell, ...opts });
   return { code: r.status, text: `${r.stdout || ''}${r.stderr || ''}`.trim() };
 };
 
@@ -118,13 +119,16 @@ console.log(`Signed. Certificate SHA-256: ${sha1 ? sha1[1] : 'unknown'}`);
 const hash = crypto.createHash('sha256').update(fs.readFileSync(apk)).digest('hex');
 fs.writeFileSync(`${apk}.sha256`, `${hash}  ${apkName}\n`);
 
+// 7b. The illustrated user manual travels with the release (rebuild it with scripts/build-user-manual.js).
+const manualPdf = path.join(root, 'docs', 'Restaurant-Inventory-User-Manual.pdf');
+
 // 8. Release notes.
 let notes = option('notes');
 if (!notes) {
   const last = out('git', ['describe', '--tags', '--abbrev=0']).text;
   const range = last && !last.includes('fatal') ? [`${last}..HEAD`] : [];
-  const subjects = out('git', ['log', ...range, '--pretty=format:- %s']).text;
-  notes = subjects || `Version ${version}`;
+  const subjects = out('git', ['log', ...range, '--pretty=format:- %s']).text.replace(/^- (Release v.*)$/gm, '');
+  notes = subjects.trim() || `Version ${version}`;
 }
 const notesFile = path.join(root, 'release', `notes-${tag}.md`);
 fs.writeFileSync(notesFile, `${notes}\n`);
@@ -151,5 +155,6 @@ if (out('git', ['status', '--porcelain', 'package.json']).text) {
 run('git', ['tag', '-a', tag, '-m', `Release ${tag}`]);
 run('git', ['push', 'origin', 'HEAD:main']);
 run('git', ['push', 'origin', tag]);
-run('gh', ['release', 'create', tag, `"${apk}"`, `"${apk}.sha256"`, '--title', `"Restaurant Inventory ${version}"`, '--notes-file', `"${notesFile}"`]);
+const extra = fs.existsSync(manualPdf) ? [`"${manualPdf}"`] : [];
+run('gh', ['release', 'create', tag, `"${apk}"`, `"${apk}.sha256"`, ...extra, '--title', `"Restaurant Inventory ${version}"`, '--notes-file', `"${notesFile}"`]);
 console.log(`\nPublished ${tag}. Phones running an older version will be offered it.`);

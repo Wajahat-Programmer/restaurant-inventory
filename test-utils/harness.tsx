@@ -15,7 +15,7 @@ export async function openApp(db: Db, tab: 'home' | 'stock' | 'purchases' | 'sal
   }
 }
 
-export type MoreMenu = 'suppliers' | 'count' | 'recipes' | 'expenses' | 'cashbook' | 'reports' | 'forecast' | 'settings';
+export type MoreMenu = 'suppliers' | 'count' | 'recipes' | 'expenses' | 'cashbook' | 'reports' | 'forecast' | 'settings' | 'help';
 
 /** Open a screen listed under More. */
 export async function goMore(menu: MoreMenu) {

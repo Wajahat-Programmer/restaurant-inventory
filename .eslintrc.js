@@ -1,5 +1,7 @@
 module.exports = {
   root: true,
+  // The manual's page content is documentation (it has its own colours), not app code.
+  ignorePatterns: ['docs/'],
   extends: '@react-native',
   rules: {
     // Colours live in src/theme/tokens.ts only.

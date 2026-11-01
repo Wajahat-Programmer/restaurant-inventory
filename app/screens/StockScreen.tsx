@@ -1,3 +1,4 @@
+import { useTourTarget } from '../../src/features/guide/TourTarget';
 import { FlashList } from '@shopify/flash-list';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -14,6 +15,7 @@ import { useRootNav } from '../navigation/useRootNav';
 export default function StockScreen() {
   const nav = useRootNav();
   const c = useColors();
+  const fabRef = useTourTarget('fab-add-item');
   const [search, setSearch] = useState('');
   const { data, error, loading } = useQuery(db => listItems(db, { search }), [search]);
 
@@ -76,6 +78,7 @@ export default function StockScreen() {
       />
 
       <FAB
+        ref={fabRef}
         testID="fab-add-item"
         icon="plus"
         label="Item"

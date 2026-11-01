@@ -1,0 +1,304 @@
+[
+  {
+    "id": "start",
+    "title": "1. Welcome and first steps",
+    "summary": "What the app does and the five minutes it takes to get going.",
+    "blocks": [
+      { "type": "p", "text": "Restaurant Inventory keeps track of everything in your kitchen store: what you have, what it cost, what you used, what you threw away, and what to order next. It works completely offline. Your data stays on this phone, and you decide when to back it up." },
+      { "type": "h", "text": "The five tabs" },
+      { "type": "list", "items": [
+        "Home: today's sales, this month's profit, what needs attention, and two quick buttons (Enter sales, Add expense).",
+        "Stock: every item with how much you have. Tap an item to see its history, take stock out, or record waste.",
+        "Purchases: stock coming in from suppliers, and whether you have paid for it.",
+        "Sales: the dishes you sold each day. Ingredients are taken out of stock for you.",
+        "More: everything else (Forecast and alerts, Reports, Dishes and recipes, Expenses, Cash book, Suppliers, Stock count, Settings, Help and manual)."
+      ] },
+      { "type": "h", "text": "Setting up in six steps" },
+      { "type": "steps", "items": [
+        "Add your items: Stock tab, tap +. You can also import many at once from a spreadsheet (see chapter 12).",
+        "Add your suppliers: More, then Suppliers, then +.",
+        "Record what is on the shelves now by entering an opening quantity and total cost when you add each item, or record a first purchase.",
+        "Add your dishes: More, then Dishes and recipes, then +. List the ingredients and the amount used per portion.",
+        "Turn on the backup: More, then Settings, then Export, import, backup. Choose a passphrase and tap Back up now.",
+        "Optional but recommended: turn on the PIN lock (More, Settings, PIN lock and people) so staff can record but not change money."
+      ] },
+      { "type": "tip", "text": "Take the guided tour any time: More, then Help and manual, then Start the guided tour." },
+      { "type": "h", "text": "Words and units" },
+      { "type": "p", "text": "Money is in rupees (Rs) and is stored to the paisa, so nothing is ever rounded away. Quantities are stored in base units: g for things you weigh, ml for liquids, pcs for things you count. The app shows kg and litres automatically when the number is large." }
+    ]
+  },
+  {
+    "id": "items",
+    "title": "2. Items and stock",
+    "summary": "Adding items, packs, par levels, and reading the stock list.",
+    "blocks": [
+      { "type": "h", "text": "Add an item" },
+      { "type": "steps", "items": [
+        "Stock tab, tap +.",
+        "Name: what you call it, for example Basmati rice.",
+        "Base units: g, ml or pcs. This cannot be mixed up later, so choose how you will count it.",
+        "Category (optional): Grains, Dairy, Spices and so on. It groups the stock value report.",
+        "Par level: how much you like to have on the shelf when fully stocked.",
+        "Reorder point: when stock falls to this, the item shows as Low and appears in the shopping list.",
+        "Shelf life (days) and Barcode are optional. Shelf life is used to warn you about items near expiry.",
+        "Add pack size lets you enter purchases as bags or cartons, for example 1 bag = 25000 g.",
+        "Opening quantity and Total cost (Rs): what you have right now and what it cost. Leave blank if you have none."
+      ] },
+      { "type": "h", "text": "Reading the stock list" },
+      { "type": "p", "text": "Each row shows the quantity and a status written in words with a symbol, never colour alone: ✓ In stock, ⚠ Low (at or below the reorder point), ✖ Out (none left)." },
+      { "type": "h", "text": "Average cost" },
+      { "type": "p", "text": "The app uses a weighted average cost. If you buy 10 kg at Rs 100 per kg and later 10 kg at Rs 120 per kg, the average is Rs 110 per kg. Every time stock goes in, the average is recalculated from exact totals, so the stock value is always correct." },
+      { "type": "tip", "text": "To fix a mistake in an item's details (name, par level and so on), open the item and tap Edit. Stock quantities are never edited directly: they change only by recording stock in, out, waste, a count or an adjustment, so there is always a trail." }
+    ]
+  },
+  {
+    "id": "photos",
+    "title": "3. Item photos",
+    "summary": "Taking photos and the automatic cut-out.",
+    "blocks": [
+      { "type": "steps", "items": [
+        "Open an item and tap Add photo (it reads Add another photo when the item already has one).",
+        "Allow the camera when Android asks. Point at the item and take the picture.",
+        "The app makes a small thumbnail for lists and keeps the full photo.",
+        "On phones with Google Play services the app also tries to cut the item out of its background. If that cannot be done (for example no internet the first time), the plain photo is kept and you can tap Retry cutout later."
+      ] },
+      { "type": "p", "text": "One photo can be the main photo (Make main). Delete main photo removes it. Photos are stored as files on the phone and are included in backups." },
+      { "type": "tip", "text": "The cut-out uses an on-device Google model. It downloads once, then works offline." }
+    ]
+  },
+  {
+    "id": "purchases",
+    "title": "4. Suppliers and purchases",
+    "summary": "Recording stock coming in, paying suppliers, undoing a purchase.",
+    "blocks": [
+      { "type": "h", "text": "Record a purchase" },
+      { "type": "steps", "items": [
+        "Purchases tab, tap +.",
+        "Choose supplier and Date.",
+        "Choose item, enter the Quantity and the Total cost (Rs) for that line. Use Add another item for more lines.",
+        "Paid now (Rs): leave blank if you paid in full, enter 0 if you bought on credit, or enter part of the amount.",
+        "Tap Save purchase (stock in). Stock and average cost update at once."
+      ] },
+      { "type": "h", "text": "Pay a supplier later" },
+      { "type": "p", "text": "More, then Suppliers, then the supplier's name shows what you owe. Tap Record payment, enter the amount in Pay supplier (Rs), and save. Payments appear in the cash book." },
+      { "type": "h", "text": "Wrong purchase?" },
+      { "type": "p", "text": "Open the purchase and tap Void purchase. The stock it added is taken out again with a reversing entry (the original line stays in the history, marked as voided). Only the owner can void when the PIN lock is on. If some of that stock was already used, the app will refuse to void and tell you why, because stock can never go below zero." }
+    ]
+  },
+  {
+    "id": "stockout",
+    "title": "5. Using stock, waste and counts",
+    "summary": "Issue, waste, adjust, and the monthly stock count.",
+    "blocks": [
+      { "type": "p", "text": "Open an item from the Stock tab. Three buttons record what happened to stock:" },
+      { "type": "list", "items": [
+        "Issue: stock used in the kitchen that is not tied to a recipe.",
+        "Waste: thrown away. Pick a reason (spoiled, expired, burnt, staff meal) and add a note. Waste is counted in your reports.",
+        "Adjust (owner only): correct a difference you cannot explain."
+      ] },
+      { "type": "h", "text": "Stock count" },
+      { "type": "steps", "items": [
+        "More, then Stock count, then Start a stock count.",
+        "Walk the shelves and type the real quantity for each item. You can stop and come back: your entries are kept as a draft.",
+        "Tap Post count and adjust stock. Differences are recorded as adjustments, and the value of any loss shows in profit and loss."
+      ] },
+      { "type": "tip", "text": "A regular count (weekly or monthly) is the single best way to find leaks: waste nobody wrote down, over-portioning, or theft." }
+    ]
+  },
+  {
+    "id": "recipes",
+    "title": "6. Dishes, recipes and sales",
+    "summary": "Costing a dish and entering the day's sales.",
+    "blocks": [
+      { "type": "h", "text": "Create a dish" },
+      { "type": "steps", "items": [
+        "More, then Dishes and recipes, then +.",
+        "Dish name and Selling price per portion (Rs).",
+        "Add ingredient: choose the item and the quantity used per portion (for example 200 g rice).",
+        "The screen shows Cost per portion and Margin immediately, using the current average cost of each ingredient."
+      ] },
+      { "type": "h", "text": "Enter sales" },
+      { "type": "steps", "items": [
+        "Home, tap Enter sales (or Sales tab, tap +).",
+        "Choose the Date, then Choose dish and Portions sold. Add another dish for more lines.",
+        "Tap Save sales."
+      ] },
+      { "type": "p", "text": "Saving sales takes every ingredient out of stock automatically, at today's average cost, and records the revenue. If an ingredient would go below zero the app tells you which one, so you can fix a missing purchase first." },
+      { "type": "p", "text": "Made a mistake? Open the sale and tap Void sale. Stock goes back and the revenue is removed." }
+    ]
+  },
+  {
+    "id": "money",
+    "title": "7. Expenses and the cash book",
+    "summary": "Rent, salaries, gas and where your cash went.",
+    "blocks": [
+      { "type": "steps", "items": [
+        "Home, tap Add expense (or More, Expenses, +).",
+        "Choose the category (rent, salaries, gas, utilities and so on), the Date and the Amount (Rs). Add a Note if useful.",
+        "Tap Save expense."
+      ] },
+      { "type": "p", "text": "More, then Cash book shows money in and out with an opening and closing balance for the period. Sales, expenses, supplier payments and anything you add by hand (Add entry, note required) all appear there." },
+      { "type": "tip", "text": "Buying stock is not an expense until the stock is sold or lost. That is why profit and loss uses ingredient cost, not purchases, so a big delivery does not make a month look bad." }
+    ]
+  },
+  {
+    "id": "reports",
+    "title": "8. Reports and PDFs",
+    "summary": "Profit and loss, stock value, supplier spend, wastage.",
+    "blocks": [
+      { "type": "p", "text": "More, then Reports (owner only when the PIN lock is on). Use the arrows at the top to move between days, weeks or months." },
+      { "type": "list", "items": [
+        "Profit and loss: Sales, minus ingredient cost, gives Gross profit; minus wastage, count losses and expenses gives Net profit, shown with ✓ for profit or ✖ for a loss.",
+        "Cost control: Food cost % (ingredients divided by sales) and Wastage % (of stock used).",
+        "Stock valuation: what the stock on your shelves is worth right now, by category.",
+        "Supplier spend: how much you bought from each supplier in the period."
+      ] },
+      { "type": "h", "text": "Share as PDF" },
+      { "type": "p", "text": "At the bottom of Reports, tap Profit and loss, Stock valuation or Wastage under Share as PDF. The app makes an A4 PDF and opens the Android share sheet so you can send it by WhatsApp or email, or save it to the phone." }
+    ]
+  },
+  {
+    "id": "forecast",
+    "title": "9. Forecast and alerts",
+    "summary": "What to order, what will run out, what looks odd.",
+    "blocks": [
+      { "type": "p", "text": "More, then Forecast and alerts. The app learns from your own sales and usage history. It shows:" },
+      { "type": "list", "items": [
+        "Needs attention: items that are Low or Out, items close to expiry, unusual usage (a day far above normal), and wastage spikes.",
+        "Days left: how many days each item will last at the recent rate of use.",
+        "What to order: a suggested quantity that covers your lead time plus a safety margin.",
+        "Sales, next 7 days and Expenses per month: a simple outlook for money."
+      ] },
+      { "type": "h", "text": "Share the shopping list" },
+      { "type": "p", "text": "Review the suggested quantities, change any you disagree with, then tap Share shopping list to send it to a supplier on WhatsApp." },
+      { "type": "h", "text": "How trustworthy is it?" },
+      { "type": "p", "text": "A forecast is shown only when there are at least 14 days of history and it has been accurate when tested against your own past days. Before that the app falls back to a plain recent average and says so. In Settings you can change the ordering days: lead days (how long a delivery takes) and review days (how often you order)." },
+      { "type": "tip", "text": "Alerts also arrive as a phone notification once a day, so you do not have to open the app to hear about low stock." }
+    ]
+  },
+  {
+    "id": "security",
+    "title": "10. PIN lock and staff",
+    "summary": "Protecting money screens and limiting what staff can do.",
+    "blocks": [
+      { "type": "h", "text": "Turn on the lock" },
+      { "type": "steps", "items": [
+        "More, then Settings, then PIN lock and people.",
+        "Type your name, a PIN of 4 to 6 digits (twice), and a recovery passphrase of at least 8 characters (twice).",
+        "Tap Turn on the lock. You are signed in as the owner."
+      ] },
+      { "type": "warn", "text": "Write the recovery passphrase down and keep it somewhere safe. It is the only way to reset the owner PIN if you forget it. There is no server and no one at the company who can reset it for you." },
+      { "type": "h", "text": "What staff can and cannot do" },
+      { "type": "list", "items": [
+        "Staff can record stock in and out, waste, counts, purchases and sales, and see alerts and the forecast.",
+        "Staff cannot void anything, adjust stock, see profit, reports, expenses or the cash book, edit dishes, or open Settings, backup and import.",
+        "The owner can do everything."
+      ] },
+      { "type": "p", "text": "Add staff under Add a staff member: a name and a PIN. Remove them from the People list when they leave. Every important action is written to a log (More, Settings, Who did what), with the person's name and the time." },
+      { "type": "h", "text": "Locking" },
+      { "type": "p", "text": "The app locks when you leave it for the time you choose under Lock again after leaving the app for (At once, 1 min, 5 min, 15 min). After 5 wrong PINs the app makes you wait, and the wait grows with each further mistake. You can also unlock with your fingerprint if you turn on Unlock with my fingerprint." },
+      { "type": "h", "text": "Forgot the owner PIN?" },
+      { "type": "p", "text": "On the lock screen tap Forgot PIN?, type the recovery passphrase and choose a new PIN. Your data is not touched." }
+    ]
+  },
+  {
+    "id": "backup",
+    "title": "11. Backup and restore",
+    "summary": "Locked backups on the phone and in Google Drive, and how to restore.",
+    "blocks": [
+      { "type": "p", "text": "A backup is one file ending in .rimbak that holds everything: items, stock, sales, money and photos. It is locked with your passphrase using strong encryption, so even if someone gets the file they cannot read it." },
+      { "type": "h", "text": "Set up" },
+      { "type": "steps", "items": [
+        "More, then Settings, then Export, import, backup.",
+        "Under Backup and restore, type a Backup passphrase (at least 8 characters) twice and tap Save passphrase.",
+        "Tap Back up now. It takes a few seconds."
+      ] },
+      { "type": "warn", "text": "Write the backup passphrase down. Without it a backup cannot be opened by anyone, including us." },
+      { "type": "p", "text": "After that the app also makes one backup a day by itself, when you open it. It keeps the newest backup of each of the last 7 days and one per week for 4 weeks, and deletes older ones. If backups fail for two days in a row you get a warning." },
+      { "type": "h", "text": "Keep a copy off the phone" },
+      { "type": "p", "text": "A backup that only lives on the phone is lost if the phone is lost. Use Share next to a backup to send the file to Google Drive, WhatsApp or a computer. Or use the Google Drive option below." },
+      { "type": "h", "text": "Restore" },
+      { "type": "steps", "items": [
+        "Show backups on this phone, then tap Restore next to the one you want. If the file is elsewhere, use Add a backup file from elsewhere first.",
+        "Type the passphrase of that backup.",
+        "Tap Replace my data. The app first makes a safety backup of what is on the phone now, checks the chosen backup, and only then swaps the data. If anything is wrong it puts your old data back."
+      ] },
+      { "type": "tip", "text": "To move to a new phone: install the app, open Export, import, backup, add the backup file, and restore it with its passphrase." },
+      { "type": "h", "text": "Google Drive (optional)" },
+      { "type": "p", "text": "If your copy of the app has been set up for Google Drive, the Google Drive section shows Connect Google Drive. Sign in with your Google account and the app sends each daily backup to a hidden app folder in your own Drive. Only this app can see that folder, and the files are still locked with your passphrase. Show backups in Drive lists them and Download brings one back to the phone so you can restore it. If the section says Google Drive backup is not set up, the person who installed the app needs to add a Google sign-in key; local backups still work." }
+    ]
+  },
+  {
+    "id": "importexport",
+    "title": "12. Import and export",
+    "summary": "Getting data in from a spreadsheet and out to one.",
+    "blocks": [
+      { "type": "h", "text": "Import" },
+      { "type": "steps", "items": [
+        "More, then Settings, then Export, import, backup, then Import from a spreadsheet.",
+        "Choose what to import: Items (with opening stock), Suppliers, or Dishes and recipes.",
+        "Tap Get template, fill it in Excel or Google Sheets, and save as CSV.",
+        "Tap Choose file and pick the CSV.",
+        "The app shows how many rows are ready and lists every problem with its line number. Nothing is added yet.",
+        "Tap Import to add the good rows. Rows with problems are skipped, so fix them and import them again."
+      ] },
+      { "type": "h", "text": "Export" },
+      { "type": "p", "text": "Under Export to a spreadsheet choose what to export (items and stock, purchases, sales and so on, some with a From and To date), then Export and share. Open the CSV in Excel or Google Sheets." }
+    ]
+  },
+  {
+    "id": "updates",
+    "title": "13. App updates",
+    "summary": "Getting new versions safely.",
+    "blocks": [
+      { "type": "p", "text": "The app looks for a new version when you open it (at most every few hours) and tells you with a banner on Home and a phone notification, once per version." },
+      { "type": "steps", "items": [
+        "More, then Settings. Under App updates tap Check for updates.",
+        "If a new version is found you see what is new and its size. Tap the install button.",
+        "The app downloads the file and checks it matches the published checksum. If it does not, it deletes the file and does not install it.",
+        "Android then asks you to confirm the update. Tap Update. The first time, Android may ask you to allow this app to install updates: switch on Allow from this source and go back."
+      ] },
+      { "type": "p", "text": "Updates keep all your data. If you ever want to be extra careful, tap Back up now before installing." }
+    ]
+  },
+  {
+    "id": "help",
+    "title": "14. Troubleshooting",
+    "summary": "Common questions and what to do.",
+    "blocks": [
+      { "type": "h", "text": "I cannot reduce stock, it says there is not enough" },
+      { "type": "p", "text": "Stock can never go below zero. Either a purchase was never recorded (record it first) or the real amount differs from the app (do a stock count to correct it)." },
+      { "type": "h", "text": "The numbers look wrong for a day" },
+      { "type": "p", "text": "Open Who did what (Settings) to see exactly what was entered and by whom. Mistakes are fixed by voiding the entry and entering it again, not by editing it." },
+      { "type": "h", "text": "Wrong passphrase, or the file is damaged" },
+      { "type": "p", "text": "Passphrases are case sensitive and spaces count. If you are sure it is right, try another backup from the list, because the file may have been damaged while copying." },
+      { "type": "h", "text": "The photo cut-out does not work" },
+      { "type": "p", "text": "It needs a phone with Google Play services and internet the first time (to download a small model). Until then the plain photo is kept. Tap Retry cutout on the item." },
+      { "type": "h", "text": "Backups say failed" },
+      { "type": "p", "text": "Most often the phone is out of free space. Free some space and tap Back up now. The Data screen shows the last good backup." },
+      { "type": "h", "text": "The update will not install" },
+      { "type": "p", "text": "Allow this app to install updates when Android asks. Make sure you have internet and enough free space. If the app says the checksum does not match, do not install it: try again later." },
+      { "type": "h", "text": "Where is my data?" },
+      { "type": "p", "text": "Only on this phone, inside the app. There is no account and no server. This is why backups matter." }
+    ]
+  },
+  {
+    "id": "glossary",
+    "title": "15. Glossary",
+    "summary": "The few terms the app uses.",
+    "blocks": [
+      { "type": "list", "items": [
+        "Base unit: g, ml or pcs. What quantities are stored in.",
+        "Par level: how much you want on the shelf when fully stocked.",
+        "Reorder point: the quantity at which an item counts as Low.",
+        "Average cost: the weighted average price of what you hold.",
+        "Void: cancel an entry by recording its opposite. The original stays in the history.",
+        "Adjustment: a correction from a count or by the owner.",
+        "Food cost %: ingredient cost divided by sales.",
+        "Lead days: how long a delivery takes after you order.",
+        "Review days: how often you order.",
+        "Passphrase: the secret words that lock backups. Different from the PIN."
+      ] }
+    ]
+  }
+]

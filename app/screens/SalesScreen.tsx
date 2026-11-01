@@ -1,3 +1,4 @@
+import { useTourTarget } from '../../src/features/guide/TourTarget';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Card, FAB, Text } from 'react-native-paper';
@@ -13,6 +14,7 @@ import { useRootNav } from '../navigation/useRootNav';
 export default function SalesScreen() {
   const nav = useRootNav();
   const c = useColors();
+  const fabRef = useTourTarget('fab-add-sales');
   const write = useWrite();
   const [period, setPeriod] = useState<PeriodState>({ kind: 'day', anchor: todayISO() });
   const [error, setError] = useState<string | null>(null);
@@ -78,6 +80,7 @@ export default function SalesScreen() {
         ))}
       </Body>
       <FAB
+        ref={fabRef}
         testID="fab-add-sales"
         icon="plus"
         label="Sales"
