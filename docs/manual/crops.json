@@ -13,5 +13,13 @@
   "33-lock-wrong": 76,
   "00-notification-prompt": 66,
   "26-audit": 36,
-  "30b-home-update-banner": 36
+  "30b-home-update-banner": 36,
+  "45-item-25d": [
+    20,
+    52
+  ],
+  "45b-item-25d-tilted": [
+    20,
+    52
+  ]
 }

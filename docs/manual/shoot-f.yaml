@@ -1,0 +1,147 @@
+appId: com.restaurantinventory
+name: "Manual screenshots, part F (new in 1.1, tour, Help, barcode, switches)"
+---
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "guide-offer"
+    timeout: 90000
+- takeScreenshot: 41-tour-offer
+- tapOn:
+    id: "guide-start"
+- extendedWaitUntil:
+    visible:
+      id: "tour-title"
+    timeout: 20000
+- takeScreenshot: 42-tour-welcome
+- tapOn:
+    id: "tour-next"
+- extendedWaitUntil:
+    visible:
+      id: "tour-body"
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: 42b-tour-highlight
+- tapOn:
+    id: "tour-next"
+- tapOn:
+    id: "tour-next"
+- waitForAnimationToEnd
+- takeScreenshot: 42c-tour-tabs
+- tapOn:
+    id: "tour-skip"
+# Stock: scan icon, scan screen, a barcode nobody has
+- tapOn:
+    id: "tab-stock"
+- extendedWaitUntil:
+    visible:
+      id: "item-Chicken"
+    timeout: 20000
+- takeScreenshot: 02b-stock-scan-icon
+- tapOn: "Scan a barcode"
+- extendedWaitUntil:
+    visible:
+      id: "scan-typed"
+    timeout: 20000
+- takeScreenshot: 43-scan
+- tapOn:
+    id: "scan-typed"
+- inputText: "4006381333931"
+- hideKeyboard
+- tapOn:
+    id: "scan-go"
+- extendedWaitUntil:
+    visible:
+      id: "scan-unknown"
+    timeout: 15000
+- takeScreenshot: 43b-scan-unknown
+- tapOn:
+    id: "scan-add-new"
+- extendedWaitUntil:
+    visible:
+      id: "field-name"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "scan-barcode"
+- takeScreenshot: 44-item-form-barcode
+- back
+# More menu and Help
+- tapOn:
+    id: "tab-more"
+- extendedWaitUntil:
+    visible:
+      id: "menu-settings"
+    timeout: 15000
+- takeScreenshot: 11-more
+- scrollUntilVisible:
+    element:
+      id: "menu-help"
+- takeScreenshot: 11b-more-lower
+- tapOn:
+    id: "menu-help"
+- extendedWaitUntil:
+    visible:
+      id: "help-tour"
+    timeout: 15000
+- takeScreenshot: 40-help
+- scrollUntilVisible:
+    element:
+      id: "chapter-toggle-items"
+- tapOn:
+    id: "chapter-toggle-items"
+- takeScreenshot: 40b-help-chapter
+- back
+# Settings and backup switches
+- tapOn:
+    id: "menu-settings"
+- extendedWaitUntil:
+    visible:
+      id: "open-data"
+    timeout: 15000
+- takeScreenshot: 23-settings
+- scroll
+- takeScreenshot: 23b-settings-lower
+- tapOn:
+    id: "open-data"
+- extendedWaitUntil:
+    visible: "Export to a spreadsheet"
+    timeout: 15000
+# The passphrase may already be saved on this phone.
+- runFlow:
+    when:
+      visible:
+        id: "field-pass1"
+    commands:
+      - tapOn:
+          id: "field-pass1"
+      - inputText: demo backup phrase
+      - hideKeyboard
+      - scrollUntilVisible:
+          element:
+            id: "field-pass2"
+      - tapOn:
+          id: "field-pass2"
+      - inputText: demo backup phrase
+      - hideKeyboard
+      - scrollUntilVisible:
+          element:
+            id: "save-passphrase"
+      - tapOn:
+          id: "save-passphrase"
+- scrollUntilVisible:
+    element:
+      id: "backup-now"
+- waitForAnimationToEnd
+- tapOn:
+    id: "backup-now"
+- extendedWaitUntil:
+    visible: ".*Backup saved.*"
+    timeout: 120000
+- back
+- tapOn:
+    id: "open-data"
+- scrollUntilVisible:
+    element:
+      id: "include-photos"
+- takeScreenshot: 25g-backup-last

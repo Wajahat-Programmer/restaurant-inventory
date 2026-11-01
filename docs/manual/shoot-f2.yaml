@@ -1,0 +1,5 @@
+appId: com.restaurantinventory
+name: Manual screenshots, part F2 (the 2.5D photo while the phone is leaned)
+---
+# Run after shoot-f, with the item page open and the emulator's accelerometer set to a lean.
+- takeScreenshot: 45b-item-25d-tilted

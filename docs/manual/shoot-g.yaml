@@ -1,0 +1,25 @@
+appId: com.restaurantinventory
+name: Manual screenshots, part G (item page with the 2.5D photo at rest)
+---
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "tab-stock"
+    timeout: 90000
+- tapOn:
+    id: "guide-dismiss"
+    optional: true
+- tapOn:
+    id: "tab-stock"
+- extendedWaitUntil:
+    visible:
+      id: "item-Chicken"
+    timeout: 20000
+- tapOn:
+    id: "item-Chicken"
+- extendedWaitUntil:
+    visible:
+      id: "detail-qty"
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: 45-item-25d

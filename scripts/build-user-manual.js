@@ -61,9 +61,10 @@ const h = {
       missing.push(name);
       return '';
     }
-    const keep = crops[name] || 100; // the picture was cropped to the top `keep` percent
+    const spec = crops[name] || 100; // the picture was cropped: top N percent, or a [from, to] band
+    const [from, to] = Array.isArray(spec) ? spec : [0, spec];
     const dots = pins
-      .map((p, i) => `<span class="pin" style="left:${p.x}%;top:${((p.y * 100) / keep).toFixed(2)}%">${i + 1}</span>`)
+      .map((p, i) => `<span class="pin" style="left:${p.x}%;top:${(((p.y - from) * 100) / (to - from)).toFixed(2)}%">${i + 1}</span>`)
       .join('');
     return `<figure class="phone"><div class="frame"><img src="${dataUri(name)}" alt="">${dots}</div>${caption ? `<figcaption>${rich(caption)}</figcaption>` : ''}</figure>`;
   },

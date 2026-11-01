@@ -101,7 +101,7 @@ module.exports = (h, { version }) => {
     h.h3('Install it'),
     h.steps([
       'On the phone, open the download page in the browser: `github.com/Wajahat-Programmer/restaurant-inventory/releases/latest`.',
-      'Under **Assets**, tap the file called `restaurant-inventory-v1.0.0.apk` (the exact version number may be higher). Do not download the `.sha256` file; it is only a checksum.',
+      'Under **Assets**, tap the file called `restaurant-inventory-v1.1.0.apk` (the exact version number may be higher). Do not download the `.sha256` file; it is only a checksum.',
       'Wait until the download finishes. Use Wi-Fi if you can. A half-finished download cannot be installed.',
       'Open the downloaded file from the browser\'s download list or from the Files app.',
       'If Android says installing from this source is blocked, tap **Settings**, switch on **Allow from this source**, then go back.',
@@ -119,8 +119,9 @@ module.exports = (h, { version }) => {
   /* ===================================================== 3 */
   chapter(
     'Your first day: quick start',
-    'Six steps from an empty app to a working shop.',
+    'Seven steps from an empty app to a working shop.',
     h.steps([
+      '**Take the two-minute tour** (the card on Home), or skip it and come back later from `More` → `Help and manual`.',
       '**Add your suppliers.** `More` → `Suppliers` → `+ Supplier`. Name and phone number are enough.',
       '**Add your items.** `Stock` tab → `+ Item`. Give each ingredient a name, a unit (g, ml or pcs), a par level and a reorder point. Enter what you have today as the opening stock (chapter 5). Many items at once? Import them from a spreadsheet (chapter 13).',
       '**Record your next delivery.** `Purchases` tab → `+ Purchase` (chapter 7). From now on every delivery goes in.',
@@ -162,10 +163,16 @@ module.exports = (h, { version }) => {
       'The Home screen.',
     ),
     h.p('Staff members who sign in with a PIN see a simpler Home without money figures (chapter 11).'),
+    h.h3('The two-minute tour'),
+    h.p('The first time you open the app, a card at the top of Home offers a guided tour. Tap `Start the tour`. The app walks through the main screens, dims everything except the thing it is explaining, and says what it is for. `Next` and `Back` move through the steps, and `Skip tour` leaves at any time. `Not now` hides the card for good; you can start the tour again whenever you like from `Help and manual`.'),
+    h.gallery([
+      { name: '41-tour-offer', pins: [{ x: 4, y: 13 }, { x: 8, y: 22 }, { x: 45, y: 22.5 }], caption: '**1** The offer. **2** `Start the tour`. **3** `Not now`.' },
+      { name: '42b-tour-highlight', pins: [{ x: 3, y: 28.5 }, { x: 6, y: 37.5 }, { x: 6, y: 45.5 }, { x: 73, y: 51 }], caption: '**1** What is being explained is outlined. **2** Where you are in the tour. **3** What it is for. **4** `Next`.' },
+    ]),
     h.h3('The More menu'),
     h.figure(
       '11-more',
-      [{ x: 3, y: 14 }, { x: 3, y: 25.5 }, { x: 3, y: 37.5 }, { x: 3, y: 49.5 }, { x: 3, y: 59.5 }, { x: 3, y: 69.5 }, { x: 3, y: 79.5 }, { x: 3, y: 89.5 }],
+      [{ x: 3, y: 14.5 }, { x: 3, y: 27 }, { x: 3, y: 39.5 }, { x: 3, y: 51.5 }, { x: 3, y: 63.5 }, { x: 3, y: 75 }, { x: 3, y: 86 }],
       [
         '**Forecast and alerts**: what to order and what runs out (chapter 10).',
         '**Reports**: profit and loss, stock value, supplier spend (chapter 9).',
@@ -174,9 +181,31 @@ module.exports = (h, { version }) => {
         '**Cash book**: money in and out, with balances (chapter 9).',
         '**Suppliers**: who you buy from and what you owe (chapter 7).',
         '**Stock count**: count the shelves and fix differences (chapter 6).',
-        '**Settings**: theme, PIN lock, backup, import and export, updates.',
       ],
       'The More menu. Staff see only the items they may use.',
+    ),
+    h.p('Scroll down for the last two entries:'),
+    h.figure(
+      '11b-more-lower',
+      [{ x: 3, y: 66 }, { x: 3, y: 77.5 }],
+      [
+        '**Settings**: appearance, 3D photos, ordering days, PIN lock, backup, import and export, updates (chapters 11 to 14).',
+        '**Help and manual**: the guided tour and this manual inside the app.',
+      ],
+      'The bottom of the More menu.',
+    ),
+    h.h3('Help and manual, inside the app'),
+    h.p('Everything in this manual is also in the app, without internet. Open `More`, then `Help and manual`.'),
+    h.figure(
+      '40-help',
+      [{ x: 6, y: 23.5 }, { x: 6, y: 41 }, { x: 3.5, y: 53.5 }, { x: 93, y: 54 }],
+      [
+        '`Start the guided tour` runs the tour again.',
+        '`Share the manual as PDF` makes a PDF of the in-app manual and opens the share sheet.',
+        'A chapter. Tap its title...',
+        '...and it opens in place. Tap again to close it.',
+      ],
+      'Help and manual.',
     ),
   );
 
@@ -218,6 +247,29 @@ module.exports = (h, { version }) => {
       'The Stock tab.',
     ),
     chips,
+    h.h3('Barcodes'),
+    h.p('Items that come in a packet usually have a barcode. Give an item its barcode once, and from then on you can find it by pointing the camera at the packet.'),
+    h.steps([
+      'In the item form, tap `Scan the barcode` (or type the number into **Barcode**). The scanned number fills the field and what you typed is kept.',
+      'To find an item later: on the **Stock** tab, tap the barcode icon at the left of the search bar, and hold the barcode of the packet inside the frame. The item opens as soon as it is read.',
+      'Barcode damaged or hard to read? Type the number in the box under the camera and tap `Go`.',
+      'If no item has that barcode, the app says so and offers `Add a new item with this barcode`, with the number already filled in.',
+    ]),
+    h.figure(
+      '02b-stock-scan-icon',
+      [{ x: 6, y: 14.5 }, { x: 8, y: 40 }],
+      [
+        'The **barcode icon** in the search bar opens the scanner. You can still type a name or a number in the bar.',
+        'Items with a cut-out photo show it here instead of the grey picture.',
+      ],
+      'The Stock tab.',
+    ),
+    h.gallery([
+      { name: '43-scan', pins: [{ x: 22, y: 50 }, { x: 15, y: 63.5 }, { x: 40, y: 94.5 }], caption: '**1** The frame: hold the barcode here. **2** The hint. **3** Or type the number and tap `Go`. (The camera picture is hidden here.)' },
+      { name: '43b-scan-unknown', pins: [{ x: 3.5, y: 85.5 }, { x: 8, y: 90.5 }], caption: '**1** Nothing matches the number. **2** `Add a new item with this barcode`.' },
+      { name: '44-item-form-barcode', pins: [{ x: 4, y: 60.5 }, { x: 48, y: 70 }], caption: '**1** The barcode field. **2** `Scan the barcode`.' },
+    ]),
+    h.tip('The same product can be printed as a 12-digit UPC or a 13-digit EAN (the same number with a 0 in front). The app treats both as one, so you never need to worry which your scanner reads.'),
     h.h3('The item page'),
     h.p('Tap any item to see everything about it.'),
     h.figure(
@@ -266,6 +318,13 @@ module.exports = (h, { version }) => {
         'Photos are stored on your phone and included in backups.',
       ],
     ),
+    h.h3('The 3D look'),
+    h.p('A cut-out photo does not sit flat on the page. It floats above it, with a soft shadow in the shape of the item, and turns a little as you tilt the phone. It is only for looks and costs nothing: it works on the item page, only while that page is open.'),
+    h.gallery([
+      { name: '45-item-25d', pins: [{ x: 22, y: 45 }, { x: 36, y: 82 }], caption: '**1** The cut-out. **2** Its shadow. Phone held still.' },
+      { name: '45b-item-25d-tilted', pins: [{ x: 22, y: 45 }, { x: 36, y: 82 }], caption: 'The phone leaned to the right: the item turns and the shadow slides the other way.' },
+    ]),
+    h.p('If you prefer flat photos, switch off **Give item photos a 3D look** in `Settings`. It is also off by itself if your phone is set to reduce motion or remove animations. An item without a cut-out, such as one photographed with no internet, shows the plain photo.'),
     h.h3('Taking stock out'),
     h.p('There are three buttons on the item page. Stock never changes by typing a new number over the old one; you record why it left.'),
     h.table(
@@ -337,7 +396,7 @@ module.exports = (h, { version }) => {
       [{ x: 3, y: 13 }, { x: 3, y: 76 }, { x: 3, y: 82.5 }, { x: 38, y: 90 }, { x: 66, y: 84.5 }],
       [
         'One card per delivery: the **supplier** and the **bill total**.',
-        'How it was paid: **Paid**, **Part paid** or **On credit** (as it was when you recorded it).',
+        'How it stands now: **Paid**, **Part paid** or **On credit**. It changes as you pay the supplier: payments settle the oldest debt first, so this always agrees with the supplier screen.',
         'The **items** and what each cost.',
         '**Void purchase** cancels a mistake (see below).',
         '**+ Purchase** records a new one.',
@@ -596,7 +655,7 @@ module.exports = (h, { version }) => {
     h.list([
       '**Auto-lock**: the app locks again after you leave it for the time you choose (at once, 1, 5 or 15 minutes).',
       '**Fingerprint**: turn on **Unlock with my fingerprint** in `PIN lock and people` to open the app with your finger instead of typing the PIN.',
-      '**Forgot your PIN?** On the lock screen tap `Forgot PIN?`, type the recovery passphrase (the third picture above), and choose a new PIN. Your data is untouched.',
+      '**Forgot your PIN?** On the lock screen tap `Forgot PIN?`, type the recovery passphrase (the third picture above), and choose a new PIN. Your data is untouched. Wrong recovery passphrases make you wait too, just like wrong PINs, so nobody can guess their way in.',
       '**Change my PIN**: in `PIN lock and people`, type the current PIN and a new one.',
       '**Turn the lock off**: needs the owner PIN. This removes all staff.',
     ]),
@@ -634,15 +693,15 @@ module.exports = (h, { version }) => {
     h.p('After this, the app backs up **once a day by itself** when you open it. It keeps the newest backup of each of the last 7 days and one for each of the last 4 weeks, and removes older ones. If backups fail for two days in a row, you get a notification.'),
     h.figure(
       '25g-backup-last',
-      [{ x: 3.5, y: 75.5 }, { x: 3.5, y: 80.5 }, { x: 28, y: 91.8 }, { x: 62, y: 98.3 }],
+      [{ x: 3.5, y: 75.5 }, { x: 3.5, y: 80 }, { x: 5, y: 86 }],
       [
-        '**Last good backup**: the date and time of the newest one.',
+        '**Last good backup**: the date and time of the newest one. It updates as soon as a backup finishes.',
         '**Back up now** makes one immediately. Do this before a big change.',
-        '**Show backups on this phone** lists them, newest first.',
-        '**Share** sends a copy anywhere. **Restore** brings one back. (Below the list, `Add a backup file from elsewhere` is for a file you copied from another phone or computer.)',
+        '**Include photos in backups**: switch it off for smaller, faster backups. They still hold every record; the photos stay on this phone. With many photos the backup file can get large, so this is the answer when backups are slow or fail for lack of space.',
       ],
       'The backup section.',
     ),
+    h.p('Below the buttons, **Show backups on this phone** lists the backups, newest first. **Share** beside a backup sends a copy anywhere, **Restore** brings one back, and `Add a backup file from elsewhere` is for a file you copied from another phone or computer.'),
     h.h3('Keep a copy off the phone'),
     h.p('A backup that only lives on the phone is lost with the phone. After a backup, tap **Share** beside it and send the file to yourself on WhatsApp or email, or copy it to a computer with a USB cable. Do this at least once a week. If your copy of the app is set up for **Google Drive**, you can also connect your Google account in the same screen, and the app sends each daily backup to a hidden folder only this app can see.'),
     h.h3('Restore'),
@@ -702,17 +761,16 @@ module.exports = (h, { version }) => {
     'Appearance, ordering days, and getting new versions.',
     h.figure(
       '23-settings',
-      [{ x: 3, y: 13.5 }, { x: 3, y: 26 }, { x: 3, y: 38.5 }, { x: 3, y: 55 }, { x: 3, y: 61.5 }, { x: 3, y: 68 }, { x: 3, y: 75.5 }, { x: 3, y: 86 }, { x: 93, y: 91.5 }],
+      [{ x: 4, y: 13.5 }, { x: 4, y: 26 }, { x: 4, y: 43.5 }, { x: 4, y: 53.5 }, { x: 4, y: 71.5 }, { x: 4, y: 78 }, { x: 4, y: 84.5 }, { x: 4, y: 93 }],
       [
-        '**Appearance**: **Phone** follows your phone\'s setting, or choose **Light** or **Dark**.',
-        '**Ordering suggestions**: how the forecast decides how much to order.',
-        '**Days for a delivery to arrive** and **Days between orders**. Use the − and + buttons.',
+        '**Appearance**: **Phone** follows your phone setting, or choose **Light** or **Dark**.',
+        '**Item photos**: the switch for the 3D look of cut-out photos (chapter 6). It is off by itself when your phone is set to reduce motion.',
+        '**Ordering suggestions**: how the forecast decides how much to order...',
+        '...using **Days for a delivery to arrive** and **Days between orders**. Use the minus and plus buttons.',
         '**PIN lock and people** (chapter 11).',
         '**Export, import, backup** (chapters 12 and 13).',
         '**Who did what**: the log of actions.',
-        '**App updates**: the installed version and when the app last checked.',
-        '**Check for updates** looks right now.',
-        'The switch makes the app check by itself, at most every 6 hours.',
+        '**App updates**: the installed version, `Check for updates`, and the switch that checks by itself (at most every 6 hours). Scroll down to see them.',
       ],
       'The Settings screen.',
     ),
@@ -754,7 +812,10 @@ module.exports = (h, { version }) => {
         ['**"There is not enough stock" when I enter sales**', 'Stock cannot go below zero. A delivery was probably not recorded: record that purchase first. If the shelf really has the food, do a stock count so the app agrees.'],
         ['**The numbers look wrong for a day**', 'Open `Settings` → `Who did what` to see what was entered and by whom. Fix a mistake by voiding the entry and entering it again.'],
         ['**I entered something twice**', 'Void the extra one (**Void sale**, **Void purchase** or **Void expense**). The stock and money go back.'],
-        ['**I forgot my PIN**', 'On the lock screen tap `Forgot PIN?` and use your recovery passphrase.'],
+        ['**I forgot my PIN**', 'On the lock screen tap `Forgot PIN?` and use your recovery passphrase. Five wrong guesses make you wait, so type it carefully.'],
+        ['**The barcode scan does nothing**', 'Hold the barcode flat inside the frame in good light, not too close. If it still will not read, type the number in the box under the camera.'],
+        ['**A photo looks flat, not 3D**', 'Only cut-out photos float. Check that `Settings` → **Give item photos a 3D look** is on, and that your phone is not set to remove animations.'],
+        ['**Backups are slow or too big**', 'Switch off **Include photos in backups** under `Export, import, backup`. The backup still holds all your records.'],
         ['**I forgot the recovery passphrase and the PIN**', 'It cannot be reset. Restore a backup on a freshly installed app to continue; your records in the backup are intact.'],
         ['**"Wrong passphrase, or the file is damaged"** when restoring', 'The passphrase is case-sensitive and spaces count. If you are sure it is right, try another backup in the list: the file may have been damaged while copying.'],
         ['**Backups say failed**', 'Most often the phone is out of free space. Free some space and tap `Back up now`.'],
