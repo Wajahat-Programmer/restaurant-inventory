@@ -6,10 +6,12 @@ import { formatQty } from '../../src/domain/units';
 import { useQuery, useWrite } from '../../src/features/data';
 import { devicePorts } from '../../src/features/photos/devicePorts';
 import { ItemPhoto } from '../../src/features/photos/ItemPhoto';
+import { Photo25D } from '../../src/features/photos/Photo25D';
 import { retryCutout } from '../../src/features/photos/savePhoto';
 import { Body, Btn, ErrorText, Row, StatusBadge, useColors } from '../../src/features/ui';
 import { deletePhoto, listPhotos, setPrimaryPhoto } from '../../src/services/photoService';
 import { getItem, setItemActive } from '../../src/services/itemService';
+import { getSetting } from '../../src/services/settingsService';
 import { allowed } from '../../src/services/session';
 import { spacing } from '../../src/theme/tokens';
 import { RootProps } from '../navigation/types';
@@ -28,6 +30,7 @@ export default function ItemDetailScreen({ navigation, route }: RootProps<'ItemD
   const { data, error } = useQuery(async db => ({
     item: await getItem(db, itemId),
     photos: await listPhotos(db, itemId),
+    depth: (await getSetting(db, 'photos.depth')) !== '0',
   }), [itemId]);
   const item = data?.item;
   const photos = data?.photos ?? [];
@@ -65,7 +68,13 @@ export default function ItemDetailScreen({ navigation, route }: RootProps<'ItemD
       </Card>
 
       <View style={styles.photoRow}>
-        <ItemPhoto path={main ? main.cutoutPath ?? main.originalPath : null} size={160} testID="main-photo" />
+        <Photo25D
+          path={main ? main.cutoutPath ?? main.originalPath : null}
+          cutoutPath={main?.cutoutPath ?? null}
+          size={160}
+          enabled={data?.depth ?? true}
+          testID="main-photo"
+        />
         <View style={styles.flex}>
           <Btn testID="add-photo" mode="contained-tonal" icon="camera" onPress={() => navigation.navigate('ItemPhoto', { itemId })}>
             {main ? 'Add another photo' : 'Add photo'}

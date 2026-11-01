@@ -1,5 +1,5 @@
 import { StyleSheet, View } from 'react-native';
-import { Card, SegmentedButtons, Text } from 'react-native-paper';
+import { Card, SegmentedButtons, Switch, Text } from 'react-native-paper';
 import { useQuery, useWrite } from '../../src/features/data';
 import { isThemeSetting, useThemeStore } from '../../src/features/themeStore';
 import { installedVersion } from '../../src/features/update/devicePorts';
@@ -49,9 +49,10 @@ export default function SettingsScreen({ navigation }: RootProps<'Settings'>) {
     lead: await getIntSetting(db, 'forecast.leadDays', 0, 60),
     review: await getIntSetting(db, 'forecast.reviewDays', 1, 60),
     version: await installedVersion(),
+    depth: (await getSetting(db, 'photos.depth')) !== '0',
   }));
 
-  const save = (key: 'theme' | 'forecast.leadDays' | 'forecast.reviewDays', value: string) =>
+  const save = (key: 'theme' | 'forecast.leadDays' | 'forecast.reviewDays' | 'photos.depth', value: string) =>
     write(db => setSetting(db, key, value));
 
   return (
@@ -75,6 +76,23 @@ export default function SettingsScreen({ navigation }: RootProps<'Settings'>) {
               { value: 'dark', label: 'Dark', testID: 'theme-dark' },
             ]}
           />
+        </Card.Content>
+      </Card>
+
+      <Card>
+        <Card.Content style={styles.gap}>
+          <Text variant="titleMedium">Item photos</Text>
+          <View style={styles.switchRow}>
+            <Switch testID="photo-depth" value={data?.depth ?? true} onValueChange={async on => {
+                await save('photos.depth', on ? '1' : '0');
+              }} />
+            <View style={styles.flex}>
+              <Text>Give item photos a 3D look</Text>
+              <Text style={{ color: c.textSecondary }}>
+                Cut-out photos float over the page with a shadow and turn a little as you tilt the phone. Switched off automatically if your phone is set to reduce motion.
+              </Text>
+            </View>
+          </View>
         </Card.Content>
       </Card>
 
@@ -122,6 +140,7 @@ export default function SettingsScreen({ navigation }: RootProps<'Settings'>) {
 const styles = StyleSheet.create({
   gap: { gap: spacing.sm },
   flex: { flex: 1 },
+  switchRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   value: { minWidth: 32, textAlign: 'center', fontVariant: ['tabular-nums'] },
 });

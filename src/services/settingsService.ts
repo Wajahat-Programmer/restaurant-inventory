@@ -15,6 +15,7 @@ export const SETTING_DEFAULTS = {
   'update.lastCheck': '',
   'update.available': '',
   'update.notified': '',
+  'photos.depth': '1',
   'backup.lastOkAt': '',
   'backup.includePhotos': '1',
   'backup.passphraseSet': '0',
