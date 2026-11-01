@@ -31,8 +31,9 @@ const fail = message => {
   console.error(`\nSTOP: ${message}`);
   process.exit(1);
 };
+// git is a real program, so it needs no shell; with one, cmd.exe splits `-m "Release v1"` into two arguments.
 const run = (cmd, cmdArgs, opts = {}) => {
-  const r = spawnSync(cmd, cmdArgs, { cwd: root, stdio: 'inherit', shell: process.platform === 'win32', ...opts });
+  const r = spawnSync(cmd, cmdArgs, { cwd: root, stdio: 'inherit', shell: process.platform === 'win32' && cmd !== 'git', ...opts });
   if (r.status !== 0) {
     fail(`${cmd} ${cmdArgs.join(' ')} failed (exit ${r.status}).`);
   }
