@@ -1,4 +1,4 @@
-import { asc, eq } from 'drizzle-orm';
+import { and, asc, eq, gte, isNull, or } from 'drizzle-orm';
 import { Queryable, schema } from '../db/client';
 import {
   daysToStockout,
@@ -12,11 +12,13 @@ import {
 } from '../domain/forecast';
 import { expiryStatus, ExpiryStatus, remainingLots } from '../domain/lots';
 import { addDays, periodRange } from '../domain/periods';
+import { SupplierPrice } from '../domain/ordering';
+import { pricePerLabel, priceRise } from '../domain/priceTrend';
 import { BaseUnit, formatQty } from '../domain/units';
 import { listItems } from './itemService';
 import { getIntSetting } from './settingsService';
 
-const { stockMovements, items, sales, expenses } = schema;
+const { stockMovements, items, sales, expenses, itemPrices, purchases } = schema;
 
 /** The local business date of a timestamp. */
 export function dateOf(ms: number): string {
@@ -122,7 +124,7 @@ export async function itemForecasts(q: Queryable, today: string): Promise<ItemFo
 }
 
 export interface Alert {
-  kind: 'out' | 'low' | 'expired' | 'expiring' | 'usage' | 'wastage' | 'runout';
+  kind: 'out' | 'low' | 'expired' | 'expiring' | 'usage' | 'wastage' | 'runout' | 'price';
   itemId?: number;
   message: string;
 }
@@ -141,6 +143,71 @@ async function weeklyWastage(q: Queryable, today: string): Promise<number[]> {
     totals.set(wk, (totals.get(wk) ?? 0) - r.v);
   }
   return weeks.map(w => totals.get(w) ?? 0);
+}
+
+/** Items whose latest purchase cost clearly more than they usually do. */
+export async function priceAlerts(q: Queryable, today: string): Promise<Alert[]> {
+  const rows = await q
+    .select({
+      itemId: itemPrices.itemId,
+      name: items.name,
+      baseUnit: items.baseUnit,
+      id: itemPrices.id,
+      date: itemPrices.effectiveDate,
+      pricePerBase: itemPrices.pricePerBase,
+    })
+    .from(itemPrices)
+    .innerJoin(items, eq(items.id, itemPrices.itemId))
+    .leftJoin(purchases, eq(purchases.id, itemPrices.purchaseId))
+    // A voided purchase is not a price anyone paid.
+    .where(and(gte(itemPrices.effectiveDate, addDays(today, -120)), or(isNull(itemPrices.purchaseId), eq(purchases.status, 'POSTED'))));
+  const byItem = new Map<number, typeof rows>();
+  for (const r of rows) {
+    byItem.set(r.itemId, [...(byItem.get(r.itemId) ?? []), r]);
+  }
+  const out: Alert[] = [];
+  for (const [itemId, list] of byItem) {
+    const rise = priceRise(list, today);
+    if (rise) {
+      const { name, baseUnit } = list[0];
+      out.push({
+        kind: 'price',
+        itemId,
+        message: `⚠ ${name} now costs ${Math.round(rise.rise * 100)}% more than usual (${pricePerLabel(rise.latest, baseUnit)}, usually ${pricePerLabel(rise.usual, baseUnit)})`,
+      });
+    }
+  }
+  return out;
+}
+
+/** The latest price each supplier charged for each item (voided purchases ignored). */
+export async function supplierPrices(q: Queryable): Promise<Map<number, SupplierPrice[]>> {
+  const rows = await q
+    .select({
+      itemId: itemPrices.itemId,
+      supplierId: itemPrices.supplierId,
+      supplierName: schema.suppliers.name,
+      pricePerBase: itemPrices.pricePerBase,
+      date: itemPrices.effectiveDate,
+      id: itemPrices.id,
+    })
+    .from(itemPrices)
+    .innerJoin(schema.suppliers, eq(schema.suppliers.id, itemPrices.supplierId))
+    .leftJoin(purchases, eq(purchases.id, itemPrices.purchaseId))
+    .where(or(isNull(itemPrices.purchaseId), eq(purchases.status, 'POSTED')));
+  const latest = new Map<string, SupplierPrice & { itemId: number }>();
+  for (const r of rows) {
+    const key = `${r.itemId}:${r.supplierId}`;
+    const cur = latest.get(key);
+    if (!cur || r.date > cur.date || (r.date === cur.date && r.id > cur.id)) {
+      latest.set(key, r);
+    }
+  }
+  const byItem = new Map<number, SupplierPrice[]>();
+  for (const { itemId, ...p } of latest.values()) {
+    byItem.set(itemId, [...(byItem.get(itemId) ?? []), p]);
+  }
+  return byItem;
 }
 
 /** Everything that needs the owner's attention right now, most urgent first. */
@@ -173,11 +240,12 @@ export async function alerts(q: Queryable, today: string): Promise<Alert[]> {
   for (const i of low) {
     list.push({ kind: 'low', itemId: i.id, message: `⚠ ${i.name} is low (${formatQty(i.qtyBase, i.baseUnit)} left)` });
   }
+  list.push(...(await priceAlerts(q, today)));
   const spike = wastageSpike(await weeklyWastage(q, today));
   if (spike.flagged) {
     list.push({ kind: 'wastage', message: `⚠ Wastage this week is ${spike.ratio}× the usual. Look at what is being thrown away.` });
   }
-  const rank = { out: 0, expired: 1, runout: 2, expiring: 3, low: 4, usage: 5, wastage: 6 } as const;
+  const rank = { out: 0, expired: 1, runout: 2, expiring: 3, low: 4, price: 5, usage: 6, wastage: 7 } as const;
   return list.sort((a, b) => rank[a.kind] - rank[b.kind]);
 }
 

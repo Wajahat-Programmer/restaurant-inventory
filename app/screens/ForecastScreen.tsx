@@ -4,9 +4,10 @@ import { Card, Checkbox, Text } from 'react-native-paper';
 import { formatPKR } from '../../src/domain/money';
 import { formatQty } from '../../src/domain/units';
 import { useQuery } from '../../src/features/data';
-import { buildShoppingList, toOrder } from '../../src/features/forecast/shoppingList';
+import { groupBySupplier, orderMessage } from '../../src/domain/ordering';
+import { toOrder } from '../../src/features/forecast/shoppingList';
 import { Body, Btn, ErrorText, Line, todayISO, useColors } from '../../src/features/ui';
-import { alerts, financialOutlook, itemForecasts } from '../../src/services/forecastService';
+import { alerts, financialOutlook, itemForecasts, supplierPrices } from '../../src/services/forecastService';
 import { spacing } from '../../src/theme/tokens';
 
 export default function ForecastScreen() {
@@ -16,16 +17,16 @@ export default function ForecastScreen() {
     alerts: await alerts(db, today),
     rows: await itemForecasts(db, today),
     outlook: await financialOutlook(db, today),
+    prices: await supplierPrices(db),
   }), [today]);
   const [excluded, setExcluded] = useState<Set<number>>(new Set());
 
   const rows = data?.rows ?? [];
   const order = toOrder(rows);
   const included = new Set(order.filter(r => !excluded.has(r.itemId)).map(r => r.itemId));
-  const message = buildShoppingList(
+  const groups = groupBySupplier(
     order.map(r => ({ itemId: r.itemId, name: r.name, baseUnit: r.baseUnit, qty: r.reorder.qty })),
-    included,
-    today,
+    data?.prices ?? new Map(),
   );
   const toggle = (id: number) =>
     setExcluded(prev => {
@@ -62,31 +63,63 @@ export default function ForecastScreen() {
         <Card.Content style={styles.gap}>
           <Text variant="titleMedium">Suggested order</Text>
           <Text style={{ color: c.textSecondary }}>
-            Based on expected use until the next delivery, plus a safety margin. Untick what you do not want, then share. Nothing is ordered for you.
+            Based on expected use until the next delivery, plus a safety margin, split by who you usually buy from. Untick what you do not want, then share each supplier's list. Nothing is ordered for you.
           </Text>
           {order.length === 0 && (
             <Text testID="no-order" style={{ color: c.textSecondary }}>
               Nothing to order right now.
             </Text>
           )}
-          {order.map(r => (
-            <View key={r.itemId} style={styles.row}>
-              <Checkbox
-                testID={`order-${r.name}`}
-                status={included.has(r.itemId) ? 'checked' : 'unchecked'}
-                onPress={() => toggle(r.itemId)}
-              />
-              <Text style={styles.flex}>{r.name}</Text>
-              <Text style={styles.num}>{formatQty(r.reorder.qty, r.baseUnit)}</Text>
-            </View>
-          ))}
-          {order.length > 0 && (
-            <Btn testID="share-list" mode="contained" icon="share-variant" disabled={!message} onPress={() => Share.share({ message })}>
-              Share shopping list
-            </Btn>
-          )}
         </Card.Content>
       </Card>
+
+      {groups.map(g => {
+        const picked = { ...g, lines: g.lines.filter(l => included.has(l.itemId)) };
+        const total = picked.lines.reduce((s, l) => s + (l.estimatePaisa ?? 0), 0);
+        const unpriced = picked.lines.filter(l => l.estimatePaisa === null).length;
+        const message = orderMessage(picked, today);
+        return (
+          <Card key={g.supplierId ?? 'none'} testID={`supplier-order-${g.supplierName}`}>
+            <Card.Content style={styles.gap}>
+              <Text variant="titleMedium">{g.supplierName}</Text>
+              {g.lines.map(l => (
+                <View key={l.itemId}>
+                  <View style={styles.row}>
+                    <Checkbox
+                      testID={`order-${l.name}`}
+                      status={included.has(l.itemId) ? 'checked' : 'unchecked'}
+                      onPress={() => toggle(l.itemId)}
+                    />
+                    <Text style={styles.flex}>{l.name}</Text>
+                    <Text style={styles.num}>{formatQty(l.qty, l.baseUnit)}</Text>
+                    <Text style={[styles.num, styles.cost, { color: c.textSecondary }]}>
+                      {l.estimatePaisa === null ? 'no price' : formatPKR(l.estimatePaisa)}
+                    </Text>
+                  </View>
+                  {l.cheaperAt && (
+                    <Text testID={`cheaper-${l.name}`} style={[styles.hint, { color: c.warning }]}>
+                      {`⚠ ${l.cheaperAt.supplierName} charged ${l.cheaperAt.savePct}% less last time`}
+                    </Text>
+                  )}
+                </View>
+              ))}
+              <Line
+                testID={`estimate-${g.supplierName}`}
+                label={unpriced ? 'Estimated cost (at least)' : 'Estimated cost'}
+                value={formatPKR(total)}
+              />
+              <Btn
+                testID={`share-${g.supplierName}`}
+                mode="contained"
+                icon="share-variant"
+                disabled={!message}
+                onPress={() => Share.share({ message })}>
+                {g.supplierId === null ? 'Share this list' : `Share with ${g.supplierName}`}
+              </Btn>
+            </Card.Content>
+          </Card>
+        );
+      })}
 
       <Card>
         <Card.Content style={styles.gap}>
@@ -143,6 +176,8 @@ const styles = StyleSheet.create({
   gap: { gap: spacing.sm },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   flex: { flex: 1 },
+  cost: { minWidth: 88, textAlign: 'right' },
+  hint: { marginLeft: 48 },
   between: { flexDirection: 'row', justifyContent: 'space-between' },
   num: { fontVariant: ['tabular-nums'] },
 });

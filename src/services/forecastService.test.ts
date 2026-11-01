@@ -3,8 +3,9 @@ import { Db, schema } from '../db/client';
 import { createTestDb } from '../db/testing';
 import { addDays } from '../domain/periods';
 import { addExpense } from './expenseService';
-import { alerts, dateOf, financialOutlook, itemForecasts } from './forecastService';
+import { alerts, dateOf, financialOutlook, itemForecasts, supplierPrices } from './forecastService';
 import { createItem } from './itemService';
+import { createSupplier, postPurchase, voidPurchase } from './purchaseService';
 import { createRecipe } from './recipeService';
 import { getIntSetting, getSetting, setSetting } from './settingsService';
 import { postSales } from './salesService';
@@ -211,5 +212,62 @@ describe('runsOutIn', () => {
     expect(runsOutIn(0.6)).toBe('today');
     expect(runsOutIn(1)).toBe('in about 1 day');
     expect(runsOutIn(2.4)).toBe('in about 2.4 days');
+  });
+});
+
+describe('price alerts', () => {
+  async function buy(supplierId: number, itemId: number, date: string, total: number, qty = 1000) {
+    return postPurchase(db, { supplierId, date, lines: [{ itemId, qtyBase: qty, totalPaisa: total }], paidPaisa: total });
+  }
+  const priceOnly = async () => (await alerts(db, TODAY)).filter(a => a.kind === 'price');
+
+  it('says when the latest purchase cost clearly more than usual, in kilos and rupees', async () => {
+    const chicken = await createItem(db, { name: 'Chicken', baseUnit: 'g' });
+    const sup = await createSupplier(db, { name: 'City Poultry' });
+    await buy(sup, chicken, addDays(TODAY, -20), 52000);
+    await buy(sup, chicken, addDays(TODAY, -12), 52000);
+    await buy(sup, chicken, addDays(TODAY, -2), 58240);
+    const list = await priceOnly();
+    expect(list).toHaveLength(1);
+    expect(list[0].message).toBe('⚠ Chicken now costs 12% more than usual (Rs 582.40 per kg, usually Rs 520.00 per kg)');
+  });
+
+  it('is quiet for a flat price, a small change, or a single purchase', async () => {
+    const rice = await createItem(db, { name: 'Rice', baseUnit: 'g' });
+    const oil = await createItem(db, { name: 'Oil', baseUnit: 'ml' });
+    const sup = await createSupplier(db, { name: 'Al-Noor' });
+    await buy(sup, rice, addDays(TODAY, -10), 32000);
+    await buy(sup, rice, addDays(TODAY, -1), 32000);
+    await buy(sup, oil, addDays(TODAY, -10), 48000);
+    await buy(sup, oil, addDays(TODAY, -1), 50000); // +4%
+    expect(await priceOnly()).toEqual([]);
+  });
+
+  it('a voided purchase is not a price anyone paid', async () => {
+    const chicken = await createItem(db, { name: 'Chicken', baseUnit: 'g' });
+    const sup = await createSupplier(db, { name: 'City Poultry' });
+    await buy(sup, chicken, addDays(TODAY, -10), 52000);
+    await buy(sup, chicken, addDays(TODAY, -5), 52000);
+    const typo = await buy(sup, chicken, addDays(TODAY, -1), 520000); // a mistyped total
+    expect(await priceOnly()).toHaveLength(1);
+    await voidPurchase(db, typo, TODAY);
+    expect(await priceOnly()).toEqual([]);
+  });
+});
+
+describe('supplier prices', () => {
+  it('keeps the latest price per supplier and per item, and skips voided purchases', async () => {
+    const rice = await createItem(db, { name: 'Rice', baseUnit: 'g' });
+    const a = await createSupplier(db, { name: 'Al-Noor' });
+    const b = await createSupplier(db, { name: 'Metro' });
+    const buy = (s: number, date: string, total: number) =>
+      postPurchase(db, { supplierId: s, date, lines: [{ itemId: rice, qtyBase: 1000, totalPaisa: total }], paidPaisa: total });
+    await buy(a, addDays(TODAY, -30), 30000);
+    await buy(a, addDays(TODAY, -5), 32000);
+    await buy(b, addDays(TODAY, -9), 28000);
+    const typo = await buy(b, addDays(TODAY, -1), 280000);
+    await voidPurchase(db, typo, TODAY);
+    const prices = (await supplierPrices(db)).get(rice)!;
+    expect(prices.map(p => [p.supplierName, p.pricePerBase]).sort()).toEqual([['Al-Noor', 32], ['Metro', 28]]);
   });
 });
