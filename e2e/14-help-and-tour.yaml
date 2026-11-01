@@ -1,7 +1,12 @@
 appId: com.restaurantinventory
 name: First-run tour offer, guided tour, and the Help and manual screen
 ---
-- runFlow: ../e2e-shared/launch.yaml
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: "tab-stock"
+    timeout: 120000
 - tapOn:
     id: "tab-home"
 - extendedWaitUntil:
@@ -46,10 +51,13 @@ name: First-run tour offer, guided tour, and the Help and manual screen
 - assertNotVisible:
     id: "guide-offer"
 # The manual is under More.
-- runFlow:
-    file: ../e2e-shared/goto-more.yaml
-    env:
-      DEST: help
+- tapOn:
+    id: "tab-more"
+- scrollUntilVisible:
+    element:
+      id: "menu-help"
+- tapOn:
+    id: "menu-help"
 - assertVisible:
     id: "help-tour"
 - scrollUntilVisible:

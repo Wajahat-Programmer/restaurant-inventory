@@ -7,3 +7,7 @@ appId: com.restaurantinventory
     visible:
       id: "tab-stock"
     timeout: 120000
+# The first-run tour offer sits at the top of Home and pushes other things down; the tour has its own test (14).
+- tapOn:
+    id: "guide-dismiss"
+    optional: true

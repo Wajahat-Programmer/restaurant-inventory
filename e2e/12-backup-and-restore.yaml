@@ -72,6 +72,9 @@ name: Back up, change the data, restore, and the data is back
       id: "backups-list"
 - tapOn:
     id: "backups-list"
+- scrollUntilVisible:
+    element:
+      text: "Restore"
 - tapOn: "Restore"
 - scrollUntilVisible:
     element:

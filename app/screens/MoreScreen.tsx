@@ -16,8 +16,8 @@ const MENU: { key: string; title: string; hint: string; icon: string; to: keyof 
   { key: 'cashbook', title: 'Cash book', hint: 'Money in and out, with balances', icon: 'book-open-variant', to: 'CashBook', needs: 'finance' },
   { key: 'suppliers', title: 'Suppliers', hint: 'Who you buy from and what you owe', icon: 'truck', to: 'Suppliers', needs: 'record' },
   { key: 'count', title: 'Stock count', hint: 'Count the shelves and fix differences', icon: 'clipboard-check', to: 'Count', needs: 'record' },
-  { key: 'help', title: 'Help and manual', hint: 'Guided tour, step-by-step manual, PDF', icon: 'help-circle-outline', to: 'Help', needs: 'record' },
   { key: 'settings', title: 'Settings', hint: 'Theme, updates, PIN lock, backup, export and import', icon: 'cog', to: 'Settings', needs: 'manage' },
+  { key: 'help', title: 'Help and manual', hint: 'Guided tour, step-by-step manual, PDF', icon: 'help-circle-outline', to: 'Help', needs: 'record' },
 ];
 
 export default function MoreScreen() {
