@@ -30,6 +30,9 @@ export default function StockScreen() {
           placeholder="Search items or barcode"
           value={search}
           onChangeText={setSearch}
+          icon="barcode-scan"
+          onIconPress={() => nav.navigate('Scan', { mode: 'find' })}
+          searchAccessibilityLabel="Scan a barcode"
         />
         <Text testID="stock-total" style={{ color: c.textSecondary }}>
           {`${data?.length ?? 0} items · Stock value ${formatPKR(totalValue)}`}

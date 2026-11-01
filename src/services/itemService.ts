@@ -1,5 +1,6 @@
-import { and, desc, eq, isNull, like, or, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, like, or, sql } from 'drizzle-orm';
 import { Db, inTransaction, Queryable, schema, Tx } from '../db/client';
+import { barcodeVariants, normalizeBarcode } from '../domain/barcode';
 import { avgCost } from '../domain/ledger';
 import {
   ItemData,
@@ -76,7 +77,7 @@ export async function createItemTx(
       parLevel: data.parLevel,
       reorderPoint: data.reorderPoint,
       shelfLifeDays: data.shelfLifeDays ?? null,
-      barcode: data.barcode ?? null,
+      barcode: storedBarcode(data.barcode),
     })
     .returning({ id: items.id });
   await writePacks(tx, row.id, data.packs);
@@ -143,7 +144,7 @@ export async function updateItem(
           parLevel: data.parLevel,
           reorderPoint: data.reorderPoint,
           shelfLifeDays: data.shelfLifeDays ?? null,
-          barcode: data.barcode ?? null,
+          barcode: storedBarcode(data.barcode),
         })
         .where(eq(items.id, id))
         .returning({ id: items.id });
@@ -352,4 +353,25 @@ export async function listItemPacks(db: Queryable): Promise<
       .filter(p => p.itemId === r.id)
       .map(p => ({ packName: p.packName, factorToBase: p.factorToBase })),
   }));
+}
+
+/** The barcode as it is kept: normalised when it is a plain barcode, as typed otherwise. */
+function storedBarcode(raw: string | undefined): string | null {
+  return raw ? normalizeBarcode(raw) ?? raw : null;
+}
+
+/** The item with this barcode (either spelling of a UPC/EAN), or null. */
+export async function findItemByBarcode(
+  q: Queryable,
+  raw: string,
+): Promise<{ id: number; name: string; isActive: boolean } | null> {
+  const code = normalizeBarcode(raw);
+  if (!code) {
+    return null;
+  }
+  const [row] = await q
+    .select({ id: items.id, name: items.name, isActive: items.isActive })
+    .from(items)
+    .where(inArray(items.barcode, barcodeVariants(code)));
+  return row ?? null;
 }

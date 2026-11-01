@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useEffect, useState } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { SegmentedButtons, Text } from 'react-native-paper';
 import { BASE_UNITS } from '../../src/domain/units';
@@ -10,6 +11,7 @@ import {
   itemFormSchema,
   toItemInput,
 } from '../../src/features/items/itemForm';
+import { useScanStore } from '../../src/features/scan/scanStore';
 import { Btn, Body, ErrorText, Field, Row } from '../../src/features/ui';
 import { createItem, getItem, updateItem } from '../../src/services/itemService';
 import { RootProps } from '../navigation/types';
@@ -21,10 +23,20 @@ export default function ItemFormScreen({ navigation, route }: RootProps<'ItemFor
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const { control, handleSubmit, reset } = useForm<ItemFormValues>({
+  const { control, handleSubmit, reset, setValue } = useForm<ItemFormValues>({
     resolver: zodResolver(itemFormSchema),
-    defaultValues: EMPTY_ITEM_FORM,
+    defaultValues: { ...EMPTY_ITEM_FORM, barcode: route.params?.barcode ?? '' },
   });
+  // A barcode read on the scan screen comes back here.
+  const takeScan = useScanStore(s => s.take);
+  useFocusEffect(
+    useCallback(() => {
+      const code = takeScan();
+      if (code) {
+        setValue('barcode', code, { shouldDirty: true });
+      }
+    }, [takeScan, setValue]),
+  );
   const packs = useFieldArray({ control, name: 'packs' });
 
   const existing = useQuery(db => (editing ? getItem(db, itemId) : Promise.resolve(null)), [itemId]);
@@ -90,6 +102,9 @@ export default function ItemFormScreen({ navigation, route }: RootProps<'ItemFor
       </Row>
       <Field control={control} name="shelfLifeDays" label="Shelf life (days)" keyboard="number-pad" />
       <Field control={control} name="barcode" label="Barcode (optional)" />
+      <Btn testID="scan-barcode" icon="barcode-scan" onPress={() => navigation.navigate('Scan', { mode: 'fill' })}>
+        Scan the barcode
+      </Btn>
 
       <Text variant="titleSmall">Pack sizes (e.g. 1 bag = 25000)</Text>
       {packs.fields.map((f, i) => (

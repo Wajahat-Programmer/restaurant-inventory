@@ -34,6 +34,7 @@ import ReportsScreen from '../screens/ReportsScreen';
 import SecurityScreen from '../screens/SecurityScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import SalesEntryScreen from '../screens/SalesEntryScreen';
+import ScanScreen from '../screens/ScanScreen';
 import SalesScreen from '../screens/SalesScreen';
 import StockActionScreen from '../screens/StockActionScreen';
 import StockScreen from '../screens/StockScreen';
@@ -101,6 +102,7 @@ export default function RootNavigator() {
             <Stack.Screen name="Tabs" component={Tabs} options={{ headerShown: false }} />
             <Stack.Screen name="ItemForm" component={ItemFormScreen} options={{ title: 'Item' }} />
             <Stack.Screen name="ItemDetail" component={ItemDetailScreen} options={{ title: 'Item' }} />
+            <Stack.Screen name="Scan" component={ScanScreen} options={{ title: 'Scan a barcode' }} />
             <Stack.Screen name="ItemPhoto" component={PhotoCaptureScreen} options={{ title: 'Photo' }} />
             <Stack.Screen name="StockAction" component={StockActionScreen} options={{ title: 'Stock' }} />
             <Stack.Screen name="PurchaseForm" component={PurchaseFormScreen} options={{ title: 'New purchase' }} />

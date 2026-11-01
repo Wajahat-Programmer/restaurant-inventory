@@ -13,7 +13,8 @@ export type StockActionKind = 'issue' | 'waste' | 'adjust';
 
 export type RootStackParamList = {
   Tabs: NavigatorScreenParams<TabParamList>;
-  ItemForm: { itemId?: number } | undefined;
+  ItemForm: { itemId?: number; barcode?: string } | undefined;
+  Scan: { mode: 'find' | 'fill' };
   ItemDetail: { itemId: number };
   ItemPhoto: { itemId: number };
   StockAction: { itemId: number; kind: StockActionKind };

@@ -52,11 +52,13 @@ jest.mock('react-native-vision-camera', () => {
   const { View } = require('react-native');
   const Camera = React.forwardRef((props, ref) => {
     React.useImperativeHandle(ref, () => ({ takePhoto: (...a) => globalThis.__camera.takePhoto(...a) }));
+    globalThis.__camera.scanner = props.codeScanner ?? null;
     return React.createElement(View, { testID: 'camera-preview' });
   });
   return {
     Camera,
     useCameraDevice: () => globalThis.__camera.device,
+    useCodeScanner: config => config,
     useCameraPermission: () => ({
       hasPermission: globalThis.__camera.permission,
       requestPermission: jest.fn(async () => {
