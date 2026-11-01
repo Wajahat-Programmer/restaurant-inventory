@@ -28,6 +28,8 @@ export type RootStackParamList = {
   ExpenseForm: undefined;
   CashBook: undefined;
   Reports: undefined;
+  DishPerformance: undefined;
+  Wastage: undefined;
   Forecast: undefined;
   Settings: undefined;
   Security: undefined;

@@ -1,11 +1,13 @@
 import { and, desc, eq, gte, inArray, lt, lte, ne, or, isNull, sql } from 'drizzle-orm';
 import { Queryable, schema } from '../db/client';
 import { computePnl, Pnl } from '../domain/finance';
+import { classifyDishes, DishClass, priceForMargin, unitMargin } from '../domain/menu';
 import { Paisa } from '../domain/money';
 import { rangeMs } from '../domain/periods';
 import { getCashBalance } from './cashService';
 import { listItems } from './itemService';
 import { listSuppliers } from './purchaseService';
+import { listRecipes } from './recipeService';
 import { requirePermission } from './session';
 
 const { sales, expenses, stockMovements, purchases, suppliers } = schema;
@@ -195,4 +197,59 @@ export async function wastageReport(q: Queryable, from: string, to: string): Pro
     totalPaisa: found.reduce((a, r) => a - r.value, 0),
     pct: pnl.wastagePct,
   };
+}
+
+export interface DishPerformance {
+  recipeId: number;
+  name: string;
+  /** Portions sold in the period. */
+  qty: number;
+  revenuePaisa: Paisa;
+  cogsPaisa: Paisa;
+  /** Profit per portion sold; for a dish that did not sell, per portion at today's cost. */
+  unitMarginPaisa: Paisa;
+  /** Profit as a percent of the selling price, or null with no price. */
+  marginPct: number | null;
+  dishClass: DishClass | null;
+  /** Today's selling price and ingredient cost of one portion. */
+  sellPricePaisa: Paisa;
+  costPaisa: Paisa;
+  /** Price that would give the target margin; set only when the dish earns less than that now. */
+  suggestedPricePaisa: Paisa | null;
+}
+
+export const TARGET_MARGIN_PCT = 65;
+
+/**
+ * How each active dish did in the period: what sold, what it earned per
+ * portion, and its place on the menu (star, plowhorse, puzzle, dog). Best
+ * sellers first; dishes that did not sell last.
+ */
+export async function dishPerformance(q: Queryable, from: string, to: string, targetPct = TARGET_MARGIN_PCT): Promise<DishPerformance[]> {
+  requirePermission('finance');
+  const sold = await q
+    .select({
+      recipeId: sales.recipeId,
+      qty: sql<number>`sum(${sales.qty})`,
+      revenue: sql<number>`sum(${sales.qty} * ${sales.pricePaisa})`,
+      cogs: sql<number>`sum(${sales.cogsPaisa})`,
+    })
+    .from(sales)
+    .where(and(eq(sales.status, 'POSTED'), gte(sales.date, from), lte(sales.date, to)))
+    .groupBy(sales.recipeId);
+  const byRecipe = new Map(sold.map(s => [s.recipeId, s]));
+  const rows = (await listRecipes(q)).map(r => {
+    const s = byRecipe.get(r.id);
+    const stats = { qty: s?.qty ?? 0, revenuePaisa: s?.revenue ?? 0, cogsPaisa: s?.cogs ?? 0 };
+    const margin = stats.qty > 0 ? unitMargin(stats) : r.marginPaisa;
+    const price = stats.qty > 0 ? stats.revenuePaisa / stats.qty : r.sellPricePaisa;
+    return { recipeId: r.id, name: r.name, ...stats, unitMarginPaisa: Math.round(margin), marginPct: price > 0 ? Math.round((margin / price) * 1000) / 10 : null, sellPricePaisa: r.sellPricePaisa, costPaisa: r.costPaisa, costKnown: r.costKnown };
+  });
+  return classifyDishes(rows)
+    .map(({ costKnown, ...r }) => {
+      const suggested = costKnown ? priceForMargin(r.costPaisa, targetPct) : null;
+      const earnsLess = r.sellPricePaisa > 0 && r.costPaisa > 0 && ((r.sellPricePaisa - r.costPaisa) / r.sellPricePaisa) * 100 < targetPct;
+      return { ...r, suggestedPricePaisa: earnsLess ? suggested : null };
+    })
+    .sort((a, b) => b.qty - a.qty || a.name.localeCompare(b.name));
 }

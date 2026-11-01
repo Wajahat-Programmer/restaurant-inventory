@@ -11,10 +11,12 @@ import { Body, Btn, ErrorText, Line, PeriodNav, PeriodState, todayISO, useColors
 import { listItems } from '../../src/services/itemService';
 import { profitAndLoss, stockValuation, supplierSpend, wastageReport } from '../../src/services/reportService';
 import { useDb } from '../../src/features/DbProvider';
+import { useRootNav } from '../navigation/useRootNav';
 
 export default function ReportsScreen() {
   const c = useColors();
   const db = useDb();
+  const nav = useRootNav();
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [period, setPeriod] = useState<PeriodState>({ kind: 'month', anchor: todayISO() });
@@ -101,6 +103,14 @@ export default function ReportsScreen() {
           {(data?.stock.byCategory ?? []).map(s => (
             <Line key={s.category} label={`${s.category} (${s.items})`} value={formatPKR(s.valuePaisa)} />
           ))}
+        </Card.Content>
+      </Card>
+
+      <Card>
+        <Card.Content>
+          <Text variant="titleMedium">Dig deeper</Text>
+          <Btn testID="open-dish-performance" mode="outlined" icon="silverware-fork-knife" onPress={() => nav.navigate('DishPerformance')}>Dish performance</Btn>
+          <Btn testID="open-wastage" mode="outlined" icon="delete-outline" onPress={() => nav.navigate('Wastage')}>Wastage details</Btn>
         </Card.Content>
       </Card>
 

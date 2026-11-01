@@ -30,7 +30,9 @@ import PurchaseFormScreen from '../screens/PurchaseFormScreen';
 import PurchasesScreen from '../screens/PurchasesScreen';
 import RecipeFormScreen from '../screens/RecipeFormScreen';
 import RecipesScreen from '../screens/RecipesScreen';
+import DishPerformanceScreen from '../screens/DishPerformanceScreen';
 import ReportsScreen from '../screens/ReportsScreen';
+import WastageScreen from '../screens/WastageScreen';
 import SecurityScreen from '../screens/SecurityScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import SalesEntryScreen from '../screens/SalesEntryScreen';
@@ -115,6 +117,8 @@ export default function RootNavigator() {
             <Stack.Screen name="ExpenseForm" component={ExpenseFormScreen} options={{ title: 'New expense' }} />
             <Stack.Screen name="CashBook" component={CashBookScreen} options={{ title: 'Cash book' }} />
             <Stack.Screen name="Reports" component={ReportsScreen} options={{ title: 'Reports' }} />
+            <Stack.Screen name="DishPerformance" component={DishPerformanceScreen} options={{ title: 'Dish performance' }} />
+            <Stack.Screen name="Wastage" component={WastageScreen} options={{ title: 'Wastage details' }} />
             <Stack.Screen name="Forecast" component={ForecastScreen} options={{ title: 'Forecast and alerts' }} />
             <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
             <Stack.Screen name="Security" component={SecurityScreen} options={{ title: 'PIN lock and people' }} />
