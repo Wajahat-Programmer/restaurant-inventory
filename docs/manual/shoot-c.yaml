@@ -1,0 +1,186 @@
+appId: com.restaurantinventory
+name: Manual screenshots, part C (filled-in forms, photo, backup)
+---
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "tab-stock"
+    timeout: 60000
+# ---- item form, filled in
+- tapOn:
+    id: "tab-stock"
+- tapOn:
+    id: "fab-add-item"
+- tapOn:
+    id: "field-name"
+- inputText: Green chillies
+- tapOn:
+    id: "field-categoryName"
+- inputText: Vegetables
+- tapOn:
+    id: "field-parLevel"
+- inputText: "5000"
+- tapOn:
+    id: "field-reorderPoint"
+- inputText: "1500"
+- hideKeyboard
+- tapOn:
+    id: "field-shelfLifeDays"
+- inputText: "5"
+- hideKeyboard
+- takeScreenshot: 06c-item-form-filled
+- scrollUntilVisible:
+    element:
+      id: "field-openingQty"
+- tapOn:
+    id: "field-openingQty"
+- inputText: "8000"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "field-openingValue"
+- tapOn:
+    id: "field-openingValue"
+- inputText: "1200"
+- hideKeyboard
+- takeScreenshot: 06d-item-form-opening
+- back
+# ---- purchase form, filled in
+- tapOn:
+    id: "tab-purchases"
+- tapOn:
+    id: "fab-add-purchase"
+- tapOn:
+    id: "pick-supplier"
+- takeScreenshot: 08a-choose-supplier
+- tapOn:
+    id: "pick-supplier-Fresh Farms"
+- tapOn:
+    id: "line-0-item"
+- tapOn:
+    id: "line-0-item-Onion"
+- tapOn:
+    id: "line-0-qty"
+- inputText: "20000"
+- tapOn:
+    id: "line-0-price"
+- inputText: "0.09"
+- hideKeyboard
+- takeScreenshot: 08b-purchase-filled
+- back
+# ---- sales entry, filled in
+- tapOn:
+    id: "tab-sales"
+- tapOn:
+    id: "fab-add-sales"
+- tapOn:
+    id: "sale-line-0-dish"
+- tapOn:
+    id: "sale-line-0-dish-Chicken Biryani"
+- tapOn:
+    id: "sale-line-0-qty"
+- inputText: "40"
+- hideKeyboard
+- tapOn:
+    id: "add-sale-line"
+- tapOn:
+    id: "sale-line-1-dish"
+- tapOn:
+    id: "sale-line-1-dish-Chai"
+- tapOn:
+    id: "sale-line-1-qty"
+- inputText: "30"
+- hideKeyboard
+- takeScreenshot: 10b-sales-filled
+- back
+# ---- expense form, filled in
+- tapOn:
+    id: "tab-more"
+- tapOn:
+    id: "menu-expenses"
+- tapOn:
+    id: "fab-add-expense"
+- tapOn: "gas"
+- tapOn:
+    id: "field-expense-amount"
+- inputText: "18500"
+- tapOn:
+    id: "field-expense-note"
+- inputText: LPG cylinders
+- hideKeyboard
+- takeScreenshot: 17b-expense-filled
+- back
+- back
+# ---- photo: permission, camera
+- tapOn:
+    id: "tab-stock"
+- tapOn:
+    id: "item-Chicken"
+- extendedWaitUntil:
+    visible:
+      id: "add-photo"
+    timeout: 15000
+- tapOn:
+    id: "add-photo"
+- extendedWaitUntil:
+    visible: ".*(While using the app|Allow|Take photo).*"
+    timeout: 15000
+- takeScreenshot: 27-camera-permission
+- tapOn:
+    text: "While using the app"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "take-photo"
+    timeout: 20000
+- takeScreenshot: 28-camera
+- tapOn:
+    id: "take-photo"
+- extendedWaitUntil:
+    visible:
+      id: "detail-qty"
+    timeout: 60000
+- takeScreenshot: 29-photo-added
+# ---- backup
+- back
+- tapOn:
+    id: "tab-more"
+- tapOn:
+    id: "menu-settings"
+- tapOn:
+    id: "open-data"
+- scrollUntilVisible:
+    element:
+      id: "field-pass1"
+- tapOn:
+    id: "field-pass1"
+- inputText: demo backup phrase
+- tapOn:
+    id: "field-pass2"
+- inputText: demo backup phrase
+- hideKeyboard
+- takeScreenshot: 25d-backup-passphrase
+- tapOn:
+    id: "save-passphrase"
+- extendedWaitUntil:
+    visible:
+      id: "backup-now"
+    timeout: 30000
+- scrollUntilVisible:
+    element:
+      id: "backup-now"
+- tapOn:
+    id: "backup-now"
+- extendedWaitUntil:
+    visible: "restaurant-20.*"
+    timeout: 120000
+- takeScreenshot: 25e-backup-done
+- tapOn: "Restore"
+- extendedWaitUntil:
+    visible:
+      id: "field-restore-pass"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "field-restore-pass"
+- takeScreenshot: 25f-restore-panel

@@ -1,0 +1,60 @@
+appId: com.restaurantinventory
+name: Manual screenshots, part D (settings, update, backup status)
+---
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "tab-stock"
+    timeout: 60000
+- tapOn:
+    id: "tab-more"
+- tapOn:
+    id: "menu-settings"
+- extendedWaitUntil:
+    visible:
+      id: "open-data"
+    timeout: 15000
+- takeScreenshot: 23-settings
+- scroll
+- takeScreenshot: 23b-settings-lower
+- scrollUntilVisible:
+    element:
+      id: "check-updates"
+- tapOn:
+    id: "check-updates"
+- extendedWaitUntil:
+    visible:
+      id: "update-notes"
+    timeout: 60000
+- takeScreenshot: 30-update-available
+- back
+- tapOn:
+    id: "tab-home"
+- extendedWaitUntil:
+    visible:
+      id: "update-banner"
+    timeout: 20000
+- takeScreenshot: 30b-home-update-banner
+- tapOn:
+    id: "tab-more"
+- tapOn:
+    id: "menu-settings"
+- tapOn:
+    id: "open-data"
+- scrollUntilVisible:
+    element:
+      id: "backups-list"
+- tapOn:
+    id: "backups-list"
+- takeScreenshot: 25g-backup-last
+- back
+- back
+- tapOn:
+    id: "menu-suppliers"
+- extendedWaitUntil:
+    visible:
+      id: "fab-add-supplier"
+    timeout: 15000
+- tapOn:
+    id: "fab-add-supplier"
+- takeScreenshot: 12b-supplier-form

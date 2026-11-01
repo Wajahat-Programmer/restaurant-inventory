@@ -1,0 +1,93 @@
+appId: com.restaurantinventory
+name: Manual screenshots, part A (stock, purchases, sales)
+---
+# Run with the demo database loaded (see docs/manual/README.md). Writes docs/manual/shots/*.png
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "tab-stock"
+    timeout: 60000
+- tapOn:
+    id: "tab-home"
+- takeScreenshot: 01-home
+- scroll
+- scroll
+- takeScreenshot: 01b-home-scrolled
+- tapOn:
+    id: "tab-stock"
+- extendedWaitUntil:
+    visible:
+      id: "item-Chicken"
+    timeout: 20000
+- takeScreenshot: 02-stock-list
+- tapOn:
+    id: "item-Chicken"
+- extendedWaitUntil:
+    visible:
+      id: "detail-qty"
+    timeout: 20000
+- takeScreenshot: 03-item-detail
+- scroll
+- takeScreenshot: 03b-item-history
+- scrollUntilVisible:
+    element:
+      id: "act-issue"
+- tapOn:
+    id: "act-issue"
+- extendedWaitUntil:
+    visible:
+      id: "field-qty"
+    timeout: 15000
+- takeScreenshot: 04-issue
+- back
+- scrollUntilVisible:
+    element:
+      id: "act-waste"
+- tapOn:
+    id: "act-waste"
+- extendedWaitUntil:
+    visible:
+      id: "field-qty"
+    timeout: 15000
+- takeScreenshot: 05-waste
+- back
+- back
+- tapOn:
+    id: "fab-add-item"
+- extendedWaitUntil:
+    visible:
+      id: "field-name"
+    timeout: 15000
+- takeScreenshot: 06-item-form
+- scroll
+- scroll
+- takeScreenshot: 06b-item-form-lower
+- back
+- tapOn:
+    id: "tab-purchases"
+- extendedWaitUntil:
+    visible:
+      id: "fab-add-purchase"
+    timeout: 15000
+- takeScreenshot: 07-purchases
+- tapOn:
+    id: "fab-add-purchase"
+- extendedWaitUntil:
+    visible: "Save purchase.*"
+    timeout: 15000
+- takeScreenshot: 08-purchase-form
+- back
+- tapOn:
+    id: "tab-sales"
+- extendedWaitUntil:
+    visible:
+      id: "fab-add-sales"
+    timeout: 15000
+- takeScreenshot: 09-sales
+- tapOn:
+    id: "fab-add-sales"
+- extendedWaitUntil:
+    visible: "Save sales"
+    timeout: 15000
+- takeScreenshot: 10-sales-entry
+- back

@@ -83,3 +83,7 @@ graphify-out/
 
 # signed release builds (never commit APKs)
 release/
+
+# manual build artefacts (full-size screenshots and the HTML the PDF is printed from)
+docs/manual/shots/
+docs/*.html

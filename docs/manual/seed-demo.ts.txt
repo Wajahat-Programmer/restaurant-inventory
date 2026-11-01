@@ -1,0 +1,140 @@
+/* TEMPORARY: builds a demo restaurant database for the user manual screenshots. Not committed. */
+import { promises as fsp } from 'fs';
+import { sql } from 'drizzle-orm';
+import { openDbFile } from '../test-utils/nodePorts';
+import { addExpense } from '../src/services/expenseService';
+import { createItem } from '../src/services/itemService';
+import { createSupplier, postPurchase, recordPayment } from '../src/services/purchaseService';
+import { createRecipe } from '../src/services/recipeService';
+import { postSales } from '../src/services/salesService';
+import { setSession } from '../src/services/session';
+import { recordWaste } from '../src/services/stockService';
+import { addStaff, setUpLock } from '../src/services/authService';
+
+const OUT = 'D:/tmp/demo';
+const TODAY = new Date(2026, 9, 24); // Saturday 24 October 2026
+const DAYS = 28;
+
+const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const dayOf = (i: number) => new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate() - (DAYS - 1 - i));
+
+type U = 'g' | 'ml' | 'pcs';
+const ITEMS: { name: string; unit: U; cat: string; par: number; reorder: number; shelf?: number; price: number; supplier: string; packs?: { packName: string; factorToBase: number }[] }[] = [
+  { name: 'Basmati rice', unit: 'g', cat: 'Grains', par: 60000, reorder: 20000, price: 32, supplier: 'Al-Noor Traders', packs: [{ packName: '25 kg bag', factorToBase: 25000 }] },
+  { name: 'Wheat flour (atta)', unit: 'g', cat: 'Grains', par: 50000, reorder: 18000, price: 12, supplier: 'Al-Noor Traders', packs: [{ packName: '20 kg bag', factorToBase: 20000 }] },
+  { name: 'Chicken', unit: 'g', cat: 'Meat', par: 40000, reorder: 15000, shelf: 3, price: 52, supplier: 'City Poultry' },
+  { name: 'Eggs', unit: 'pcs', cat: 'Dairy and eggs', par: 150, reorder: 50, shelf: 14, price: 3800, supplier: 'City Poultry', packs: [{ packName: 'Tray of 30', factorToBase: 30 }] },
+  { name: 'Yogurt', unit: 'g', cat: 'Dairy and eggs', par: 12000, reorder: 4000, shelf: 7, price: 26, supplier: 'Fresh Farms' },
+  { name: 'Onion', unit: 'g', cat: 'Vegetables', par: 30000, reorder: 10000, shelf: 20, price: 9, supplier: 'Fresh Farms' },
+  { name: 'Tomato', unit: 'g', cat: 'Vegetables', par: 25000, reorder: 8000, shelf: 6, price: 11, supplier: 'Fresh Farms' },
+  { name: 'Cooking oil', unit: 'ml', cat: 'Oils', par: 25000, reorder: 8000, price: 48, supplier: 'Al-Noor Traders', packs: [{ packName: '5 L can', factorToBase: 5000 }] },
+  { name: 'Red chilli powder', unit: 'g', cat: 'Spices', par: 3000, reorder: 1000, price: 90, supplier: 'Al-Noor Traders' },
+  { name: 'Tea leaves', unit: 'g', cat: 'Beverages', par: 4000, reorder: 1500, price: 140, supplier: 'Al-Noor Traders' },
+  { name: 'Cold drink 345 ml', unit: 'pcs', cat: 'Beverages', par: 240, reorder: 72, price: 4500, supplier: 'Metro Cash & Carry', packs: [{ packName: 'Carton of 24', factorToBase: 24 }] },
+];
+
+const DISHES: { name: string; price: number; lines: Record<string, number>; perDay: number }[] = [
+  { name: 'Chicken Biryani', price: 45000, perDay: 38, lines: { 'Basmati rice': 150, Chicken: 120, 'Cooking oil': 20, Onion: 60, Yogurt: 30, 'Red chilli powder': 4 } },
+  { name: 'Chicken Karahi (half)', price: 120000, perDay: 14, lines: { Chicken: 400, Tomato: 250, 'Cooking oil': 40, Onion: 50, 'Red chilli powder': 6 } },
+  { name: 'Roti', price: 2500, perDay: 110, lines: { 'Wheat flour (atta)': 80 } },
+  { name: 'Egg Paratha', price: 18000, perDay: 22, lines: { 'Wheat flour (atta)': 120, Eggs: 1, 'Cooking oil': 15 } },
+  { name: 'Chai', price: 8000, perDay: 55, lines: { 'Tea leaves': 4 } },
+  { name: 'Cold drink', price: 9000, perDay: 45, lines: { 'Cold drink 345 ml': 1 } },
+];
+
+const DOW = [1.2, 0.8, 0.8, 0.9, 1.0, 1.3, 1.5]; // Sun..Sat
+const planned = (i: number, perDay: number, k: number) => Math.max(1, Math.round(perDay * DOW[dayOf(i).getDay()] * (0.9 + (((i * 37 + k * 11) % 9) / 40))));
+
+jest.setTimeout(300000);
+
+it('seeds the demo restaurant', async () => {
+  await fsp.mkdir(OUT, { recursive: true });
+  for (const f of ['restaurant.db', 'restaurant-lock.db']) await fsp.rm(`${OUT}/${f}`, { force: true });
+  setSession(null);
+  const { db, close } = await openDbFile(`${OUT}/restaurant.db`, { migrated: true });
+  const realStart = Date.now() - 1000;
+  const stamp = async (i: number) => {
+    const ms = new Date(dayOf(i).getFullYear(), dayOf(i).getMonth(), dayOf(i).getDate(), 12, 0, 0).getTime();
+    for (const t of ['stock_movements', 'sales', 'purchases', 'purchase_lines', 'cash_entries', 'expenses', 'supplier_payments', 'item_prices', 'audit_log']) {
+      await db.run(sql.raw(`UPDATE ${t} SET created_at = ${ms} WHERE created_at >= ${realStart}`)).catch(() => undefined); // some tables have no created_at
+    }
+  };
+
+  const ids: Record<string, number> = {};
+  for (const it of ITEMS) {
+    ids[it.name] = await createItem(db, { name: it.name, baseUnit: it.unit, categoryName: it.cat, parLevel: it.par, reorderPoint: it.reorder, shelfLifeDays: it.shelf, packs: it.packs ?? [] });
+  }
+  const sup: Record<string, number> = {};
+  for (const [name, phone] of [['Al-Noor Traders', '0300 1234567'], ['City Poultry', '0321 7654321'], ['Fresh Farms', '0333 2223344'], ['Metro Cash & Carry', '042 111 222 333']]) {
+    sup[name] = await createSupplier(db, { name, phone });
+  }
+  const rec: Record<string, number> = {};
+  for (const d of DISHES) {
+    rec[d.name] = await createRecipe(db, { name: d.name, sellPricePaisa: d.price, lines: Object.entries(d.lines).map(([n, q]) => ({ itemId: ids[n], qtyBase: q })) });
+  }
+
+  const usageOver = (item: string, from: number, days: number) => {
+    let q = 0;
+    for (let i = from; i < Math.min(DAYS, from + days); i++) {
+      DISHES.forEach((d, k) => { q += (d.lines[item] ?? 0) * planned(i, d.perDay, k); });
+    }
+    return q;
+  };
+
+  for (let i = 0; i < DAYS; i++) {
+    const date = iso(dayOf(i));
+    // Restock every third day (the first time for two days of use, with a margin).
+    if (i % 3 === 0) {
+      const bySupplier: Record<string, { itemId: number; qtyBase: number; totalPaisa: number }[]> = {};
+      for (const it of ITEMS) {
+        let factor = i === 0 ? 1.15 : 1.03;
+        if (i >= 18 && it.name === 'Chicken') factor = 0.55; // short on chicken near the end
+        if (i >= 21 && (it.name === 'Cooking oil' || it.name === 'Tomato')) continue; // not reordered: Low / Out
+        if (i >= 21 && it.name === 'Tea leaves') factor = 0.5;
+        const qty = Math.ceil(usageOver(it.name, i, 3) * factor);
+        if (qty <= 0) continue;
+        (bySupplier[it.supplier] ??= []).push({ itemId: ids[it.name], qtyBase: qty, totalPaisa: qty * it.price });
+      }
+      for (const [name, lines] of Object.entries(bySupplier)) {
+        const total = lines.reduce((a, l) => a + l.totalPaisa, 0);
+        let paid = total;
+        if (name === 'Al-Noor Traders' && i >= 18) paid = Math.floor(total / 2);
+        if (name === 'City Poultry' && i === 24) paid = 0;
+        await postPurchase(db, { supplierId: sup[name], date, lines, paidPaisa: paid });
+      }
+    }
+    for (const [k, d] of DISHES.entries()) {
+      let qty = planned(i, d.perDay, k);
+      while (qty > 0) {
+        try {
+          await postSales(db, { date, lines: [{ recipeId: rec[d.name], qty }] });
+          break;
+        } catch (e) {
+          void e;
+          qty = Math.floor(qty * 0.8); // sell what the shelf can cover
+        }
+      }
+    }
+    if (iso(dayOf(i)) === '2026-10-01') await addExpense(db, { date, category: 'rent', amountPaisa: 12000000, note: 'October rent' });
+    if (iso(dayOf(i)) === '2026-10-05') await addExpense(db, { date, category: 'utilities', amountPaisa: 4250000, note: 'Electricity bill' });
+    if (iso(dayOf(i)) === '2026-10-10') await addExpense(db, { date, category: 'gas', amountPaisa: 1850000, note: 'LPG cylinders' });
+    if (iso(dayOf(i)) === '2026-10-15') await addExpense(db, { date, category: 'salaries', amountPaisa: 15000000, note: 'Kitchen and counter staff' });
+    if (iso(dayOf(i)) === '2026-10-20') await addExpense(db, { date, category: 'maintenance', amountPaisa: 650000, note: 'Fryer repair' });
+    if (i === 15) await recordWaste(db, { itemId: ids['Basmati rice'], qtyBase: 800, reason: 'burnt', note: 'Burnt pot' });
+    if (i === 20) await recordWaste(db, { itemId: ids['Tomato'], qtyBase: 2000, reason: 'spoiled', note: 'Soft tomatoes' });
+    if (i === 22) await recordWaste(db, { itemId: ids['Yogurt'], qtyBase: 1500, reason: 'expired' });
+    if (i === 25) await recordWaste(db, { itemId: ids['Chicken'], qtyBase: 1200, reason: 'staff meal' });
+    await stamp(i);
+  }
+  await recordPayment(db, { supplierId: sup['Al-Noor Traders'], date: '2026-10-22', amountPaisa: 2000000 });
+  await stamp(DAYS - 3);
+  close();
+
+  // A second copy with the PIN lock on, for the lock screen pictures.
+  await fsp.copyFile(`${OUT}/restaurant.db`, `${OUT}/restaurant-lock.db`);
+  const locked = await openDbFile(`${OUT}/restaurant-lock.db`);
+  await setUpLock(locked.db, { ownerName: 'Wajahat', pin: '4829', recoveryPassphrase: 'my first restaurant' });
+  await addStaff(locked.db, { name: 'Bilal', pin: '7391' });
+  setSession(null);
+  locked.close();
+});

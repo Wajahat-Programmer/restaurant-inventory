@@ -1,0 +1,55 @@
+appId: com.restaurantinventory
+name: Manual screenshots, part E (PIN lock and staff)
+---
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "lock-title"
+    timeout: 90000
+- takeScreenshot: 31-lock-screen
+- tapOn:
+    id: "forgot-pin"
+- extendedWaitUntil:
+    visible:
+      id: "field-recovery"
+    timeout: 15000
+- takeScreenshot: 36-forgot-pin
+- tapOn:
+    id: "back-to-lock"
+- tapOn:
+    id: "user-Wajahat"
+- runFlow:
+    file: ../../e2e-shared/pin.yaml
+    env: { A: "0", B: "1", C: "1", D: "1" }
+- takeScreenshot: 32-lock-pin
+- tapOn:
+    id: "pin-ok"
+- extendedWaitUntil:
+    visible: ".*Wrong PIN.*"
+    timeout: 20000
+- takeScreenshot: 33-lock-wrong
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "lock-title"
+    timeout: 60000
+- tapOn:
+    id: "user-Bilal"
+- runFlow:
+    file: ../../e2e-shared/pin.yaml
+    env: { A: "7", B: "3", C: "9", D: "1" }
+- tapOn:
+    id: "pin-ok"
+- extendedWaitUntil:
+    visible:
+      id: "tab-more"
+    timeout: 30000
+- takeScreenshot: 34-staff-home
+- tapOn:
+    id: "tab-more"
+- extendedWaitUntil:
+    visible:
+      id: "menu-forecast"
+    timeout: 15000
+- takeScreenshot: 35-staff-more

@@ -1,0 +1,150 @@
+appId: com.restaurantinventory
+name: Manual screenshots, part B (more menu, money, reports, settings)
+---
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "tab-stock"
+    timeout: 60000
+- tapOn:
+    id: "tab-more"
+- extendedWaitUntil:
+    visible:
+      id: "menu-suppliers"
+    timeout: 15000
+- takeScreenshot: 11-more
+- tapOn:
+    id: "menu-suppliers"
+- extendedWaitUntil:
+    visible:
+      id: "supplier-Al-Noor Traders"
+    timeout: 15000
+- takeScreenshot: 12-suppliers
+- tapOn:
+    id: "supplier-Al-Noor Traders"
+- extendedWaitUntil:
+    visible:
+      id: "supplier-due"
+    timeout: 15000
+- takeScreenshot: 13-supplier-detail
+- back
+- back
+- tapOn:
+    id: "menu-recipes"
+- extendedWaitUntil:
+    visible:
+      id: "recipe-Chicken Biryani"
+    timeout: 15000
+- takeScreenshot: 14-recipes
+- tapOn:
+    id: "recipe-Chicken Biryani"
+- extendedWaitUntil:
+    visible:
+      id: "field-recipe-name"
+    timeout: 15000
+- takeScreenshot: 15-recipe-form
+- scrollUntilVisible:
+    element:
+      id: "recipe-cost"
+- takeScreenshot: 15b-recipe-cost
+- back
+- back
+- tapOn:
+    id: "menu-expenses"
+- extendedWaitUntil:
+    visible:
+      id: "fab-add-expense"
+    timeout: 15000
+- takeScreenshot: 16-expenses
+- tapOn:
+    id: "fab-add-expense"
+- extendedWaitUntil:
+    visible: "Save expense"
+    timeout: 15000
+- takeScreenshot: 17-expense-form
+- back
+- back
+- tapOn:
+    id: "menu-cashbook"
+- extendedWaitUntil:
+    visible:
+      id: "cash-closing"
+    timeout: 15000
+- takeScreenshot: 18-cashbook
+- back
+- tapOn:
+    id: "menu-reports"
+- extendedWaitUntil:
+    visible:
+      id: "pnl-net"
+    timeout: 15000
+- takeScreenshot: 19-reports
+- scroll
+- scroll
+- takeScreenshot: 19b-reports-lower
+- scroll
+- scroll
+- takeScreenshot: 19c-reports-pdf
+- back
+- tapOn:
+    id: "menu-forecast"
+- extendedWaitUntil:
+    visible:
+      id: "share-list"
+    timeout: 20000
+- takeScreenshot: 20-forecast
+- scroll
+- scroll
+- takeScreenshot: 20b-forecast-lower
+- back
+- tapOn:
+    id: "menu-count"
+- extendedWaitUntil:
+    visible:
+      id: "start-count"
+    timeout: 15000
+- takeScreenshot: 21-count-start
+- tapOn:
+    id: "start-count"
+- extendedWaitUntil:
+    visible:
+      id: "count-progress"
+    timeout: 15000
+- takeScreenshot: 22-count
+- back
+- tapOn:
+    id: "menu-settings"
+- extendedWaitUntil:
+    visible:
+      id: "open-data"
+    timeout: 15000
+- takeScreenshot: 23-settings
+- scroll
+- takeScreenshot: 23b-settings-lower
+- tapOn:
+    id: "open-security"
+- extendedWaitUntil:
+    visible:
+      id: "field-owner-name"
+    timeout: 15000
+- takeScreenshot: 24-security
+- back
+- tapOn:
+    id: "open-data"
+- extendedWaitUntil:
+    visible: "Export to a spreadsheet"
+    timeout: 15000
+- takeScreenshot: 25-data-export
+- scroll
+- scroll
+- takeScreenshot: 25b-data-import
+- scroll
+- scroll
+- takeScreenshot: 25c-data-backup
+- back
+- tapOn:
+    id: "open-audit"
+- extendedWaitUntil:
+    visible: "Who did what.*|.*"
+    timeout: 8000
+- takeScreenshot: 26-audit

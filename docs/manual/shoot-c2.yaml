@@ -1,0 +1,56 @@
+appId: com.restaurantinventory
+name: Manual screenshots, part C2 (backup and restore)
+---
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "tab-stock"
+    timeout: 60000
+- tapOn:
+    id: "tab-more"
+- tapOn:
+    id: "menu-settings"
+- tapOn:
+    id: "open-data"
+- scrollUntilVisible:
+    element:
+      id: "field-pass1"
+- tapOn:
+    id: "field-pass1"
+- inputText: demo backup phrase
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "field-pass2"
+- tapOn:
+    id: "field-pass2"
+- inputText: demo backup phrase
+- hideKeyboard
+- takeScreenshot: 25d-backup-passphrase
+- scrollUntilVisible:
+    element:
+      id: "save-passphrase"
+- tapOn:
+    id: "save-passphrase"
+- extendedWaitUntil:
+    visible:
+      id: "backup-now"
+    timeout: 30000
+- scrollUntilVisible:
+    element:
+      id: "backup-now"
+- waitForAnimationToEnd
+- tapOn:
+    id: "backup-now"
+- extendedWaitUntil:
+    visible: "restaurant-20.*"
+    timeout: 120000
+- takeScreenshot: 25e-backup-done
+- scrollUntilVisible:
+    element:
+      text: "Restore"
+- tapOn: "Restore"
+- scrollUntilVisible:
+    element:
+      id: "field-restore-pass"
+- takeScreenshot: 25f-restore-panel

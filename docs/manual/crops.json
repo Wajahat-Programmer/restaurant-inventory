@@ -1,0 +1,17 @@
+{
+  "04-issue": 45,
+  "05-waste": 45,
+  "17b-expense-filled": 60,
+  "08b-purchase-filled": 78,
+  "24-security": 72,
+  "10b-sales-filled": 90,
+  "34-staff-home": 42,
+  "35-staff-more": 42,
+  "36-forgot-pin": 40,
+  "31-lock-screen": 76,
+  "32-lock-pin": 76,
+  "33-lock-wrong": 76,
+  "00-notification-prompt": 66,
+  "26-audit": 36,
+  "30b-home-update-banner": 36
+}
