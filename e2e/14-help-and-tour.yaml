@@ -1,0 +1,74 @@
+appId: com.restaurantinventory
+name: First-run tour offer, guided tour, and the Help and manual screen
+---
+- runFlow: ../e2e-shared/launch.yaml
+- tapOn:
+    id: "tab-home"
+- extendedWaitUntil:
+    visible:
+      id: "guide-offer"
+    timeout: 20000
+- tapOn:
+    id: "guide-start"
+- extendedWaitUntil:
+    visible:
+      id: "tour-title"
+    timeout: 15000
+- assertVisible:
+    id: "tour-title"
+    text: "Welcome"
+- tapOn:
+    id: "tour-next"
+- extendedWaitUntil:
+    visible:
+      id: "tour-title"
+    timeout: 15000
+- assertVisible:
+    id: "tour-title"
+    text: "Your two daily jobs"
+- tapOn:
+    id: "tour-next"
+- tapOn:
+    id: "tour-next"
+- assertVisible:
+    id: "tour-title"
+    text: "Five tabs"
+- tapOn:
+    id: "tour-back"
+- assertVisible:
+    id: "tour-title"
+    text: "What needs attention"
+# Leaving the tour at any time is fine, and it does not come back by itself.
+- tapOn:
+    id: "tour-skip"
+- assertNotVisible:
+    id: "tour-overlay"
+- assertNotVisible:
+    id: "guide-offer"
+# The manual is under More.
+- runFlow:
+    file: ../e2e-shared/goto-more.yaml
+    env:
+      DEST: help
+- assertVisible:
+    id: "help-tour"
+- scrollUntilVisible:
+    element:
+      id: "chapter-toggle-backup"
+- tapOn:
+    id: "chapter-toggle-backup"
+- assertVisible: ".*Write the backup passphrase down.*"
+# Starting the tour again from here.
+- scrollUntilVisible:
+    element:
+      id: "help-tour"
+    direction: UP
+- tapOn:
+    id: "help-tour"
+- extendedWaitUntil:
+    visible:
+      id: "tour-title"
+    timeout: 15000
+- assertVisible:
+    id: "tour-title"
+    text: "Welcome"

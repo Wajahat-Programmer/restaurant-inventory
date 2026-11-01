@@ -1,4 +1,5 @@
-import manual from './manual.json';
+// Not named manual.json: Metro would pick that file over manual.ts for `import './manual'`.
+import manual from './manualText.json';
 
 export type Block =
   | { type: 'p' | 'h' | 'tip' | 'warn'; text: string }

@@ -14,11 +14,12 @@ src/domain/             pure TS: ledger, units, purchasing, stock status, photos
 src/db/                 schema.ts, migrations/ (drizzle-kit), client.ts (proxy driver, migrate, inTransaction), opsqlite.ts (the only native import), testing.ts (better-sqlite3)
 src/services/           every write: one transaction each, all stock changes via ledgerService.postMovement
 src/features/           hooks (useQuery/useWrite), shared ui, form schemas per module
-src/native/             TurboModule specs (codegen); Kotlin in android/app/src/main/java/com/restaurantinventory/{cutout,update,kdf}/
+src/native/             TurboModule specs (codegen); Kotlin in android/app/src/main/java/com/restaurantinventory/{cutout,update,kdf,tilt}/
 src/features/backup/    encrypted .rimbak backup/restore (staged, reversible), daily run, retention
 src/features/drive/     Google Drive upload/list/download (config.ts holds the OAuth web client id; empty = off)
 src/features/update/    GitHub Releases update check, download, checksum, install; dev-feed.txt test hook (debug only)
-src/features/guide/     guided tour (TourProvider/TourTarget, no library) and the manual (manual.json is the single source)
+src/features/guide/     guided tour (TourProvider/TourTarget, no library) and the manual (manualText.json is the in-app manual's text)
+src/features/scan/      barcode scan store; app/screens/ScanScreen.tsx (find an item, or fill the item form's barcode)
 src/features/reports/   PDF pages for reports (pdfHtml) and sharing (pdfDevice)
 scripts/                release.js (signed APK + checksum + publish), build-manual.js (manual PDF), build-migrations.js
 src/features/photos/    pipeline (pure, injected ports), device ports, camera helpers
@@ -51,6 +52,10 @@ e2e/                    Maestro flows (top level only); e2e-shared/ helper flows
 - ML Kit cutout needs its model from Google Play services. On an emulator with no Google account it never downloads ("Waiting for the subject segmentation optional module"); the app then keeps the plain photo and offers Retry cutout. Verify real cutouts on a phone with Play services and internet.
 - Camera: keep `isActive` true until `takePhoto` returns, or it fails with "Camera is closed".
 - PBKDF2 (PINs, backup keys) runs in Kotlin (`NativeKdf`) via `setKdf`; pure JS took ~60 s per backup on a phone and froze the app. Crypto functions are async for that reason. The JS version is the fallback and the test reference.
+- Reads wait for queued writes (`writesIdle`) and VACUUM runs through `exclusive`: one connection, so a read mid-transaction sees half a write. Never `await` a read inside `exclusive`/`inTransaction`.
+- 2.5D photos (`Photo25D`): the shadow is the same cut-out tinted black and blurred; the tilt comes from our own accelerometer module (`NativeTilt`, device event "tilt"). Off with the Settings switch or reduce motion.
+- Barcode scanning needs `VisionCamera_enableCodeScanner=true` in android/gradle.properties (a native rebuild). Barcodes are stored normalised (`normalizeBarcode`); UPC-A and EAN-13 spellings match each other.
+- Purchase status (Paid / Part paid / On credit) is worked out now, with supplier payments settling the oldest debt first (`settle`), so it agrees with the supplier screen.
 - A safety backup made before a restore must not prune the file being restored (`keep`), or retention deletes the chosen backup. Regression-tested.
 - Maestro on Windows mangles non-ASCII glyphs (match with `.*`), only sees on-screen text (notes above the scroll position are invisible), and needs waits after PIN/backup actions.
 - Every Maestro flow and subflow needs an `appId` header. A flow that always clears state cannot catch persistence bugs: keep `06-persistence`.

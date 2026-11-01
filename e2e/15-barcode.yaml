@@ -1,0 +1,79 @@
+appId: com.restaurantinventory
+name: Barcode on an item, and finding the item again by typing the number
+---
+- runFlow: ../e2e-shared/launch.yaml
+- tapOn:
+    id: "tab-stock"
+- tapOn:
+    id: "fab-add-item"
+- tapOn:
+    id: "field-name"
+- inputText: Ketchup
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "field-barcode"
+- tapOn:
+    id: "field-barcode"
+- inputText: "8964 0001-23457"
+- hideKeyboard
+# The Scan button is there, next to the field.
+- assertVisible:
+    id: "scan-barcode"
+- scrollUntilVisible:
+    element:
+      id: "save-item"
+- tapOn:
+    id: "save-item"
+- extendedWaitUntil:
+    visible:
+      id: "item-Ketchup"
+    timeout: 15000
+# Find it by number from the search bar's scan icon (the camera is not needed for typing).
+- tapOn: "Scan a barcode"
+- extendedWaitUntil:
+    visible:
+      id: "scan-typed"
+    timeout: 20000
+- tapOn:
+    id: "scan-typed"
+- inputText: "8964000123457"
+- hideKeyboard
+- tapOn:
+    id: "scan-go"
+- extendedWaitUntil:
+    visible:
+      id: "detail-name"
+    timeout: 15000
+- assertVisible:
+    id: "detail-name"
+    text: "Ketchup"
+# A number nobody has: offered a new item with it filled in.
+- back
+- tapOn: "Scan a barcode"
+- extendedWaitUntil:
+    visible:
+      id: "scan-typed"
+    timeout: 20000
+- tapOn:
+    id: "scan-typed"
+- inputText: "4006381333931"
+- hideKeyboard
+- tapOn:
+    id: "scan-go"
+- extendedWaitUntil:
+    visible:
+      id: "scan-unknown"
+    timeout: 15000
+- tapOn:
+    id: "scan-add-new"
+- extendedWaitUntil:
+    visible:
+      id: "field-name"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "field-barcode"
+- assertVisible:
+    id: "field-barcode"
+    text: "4006381333931"
