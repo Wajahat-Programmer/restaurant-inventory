@@ -10,8 +10,10 @@ const journal = JSON.parse(
 
 const migrations = journal.entries.map(e => ({
   tag: e.tag,
+  // LF only: Windows checkouts may hold CRLF, and the bundle must be identical on every machine (CI compares it).
   statements: fs
     .readFileSync(path.join(dir, `${e.tag}.sql`), 'utf8')
+    .replace(/\r\n/g, '\n')
     .split('--> statement-breakpoint')
     .map(s => s.trim())
     .filter(Boolean),

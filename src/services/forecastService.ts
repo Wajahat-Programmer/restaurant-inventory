@@ -144,6 +144,10 @@ async function weeklyWastage(q: Queryable, today: string): Promise<number[]> {
 }
 
 /** Everything that needs the owner's attention right now, most urgent first. */
+/** "today" for under a day, otherwise "in about N days". */
+export const runsOutIn = (days: number): string =>
+  days < 1 ? 'today' : days === 1 ? 'in about 1 day' : `in about ${days} days`;
+
 export async function alerts(q: Queryable, today: string): Promise<Alert[]> {
   const list: Alert[] = [];
   const forecasts = await itemForecasts(q, today);
@@ -159,7 +163,7 @@ export async function alerts(q: Queryable, today: string): Promise<Alert[]> {
       list.push({ kind: 'expiring', itemId: f.itemId, message: `⚠ ${f.name}: ${q1(f.expiry.expiringQty)} expires within 2 days` });
     }
     if (f.onHand > 0 && f.daysLeft !== null && f.daysLeft <= 3) {
-      list.push({ kind: 'runout', itemId: f.itemId, message: `⚠ ${f.name} will run out in about ${f.daysLeft} days` });
+      list.push({ kind: 'runout', itemId: f.itemId, message: `⚠ ${f.name} will run out ${runsOutIn(f.daysLeft)}` });
     }
     if (f.usageSpike) {
       list.push({ kind: 'usage', itemId: f.itemId, message: `⚠ ${f.name}: yesterday's use was unusually high. Check for waste or theft.` });

@@ -72,15 +72,28 @@ export async function migrate(db: Db, upTo = migrations.length): Promise<void> {
 let chain: Promise<unknown> = Promise.resolve();
 
 /**
- * Runs `fn` in one transaction, one at a time. A single connection cannot
- * interleave two transactions, so writes are queued behind each other.
- * Everything inside either commits together or rolls back together.
+ * Runs `fn` on its own, after every write queued before it and before any
+ * queued after it. One connection cannot interleave two transactions, so
+ * writes wait their turn. Also for statements that cannot run inside a
+ * transaction (VACUUM).
  */
-export function inTransaction<T>(
-  db: Db,
-  fn: (tx: Tx) => Promise<T>,
-): Promise<T> {
-  const run = chain.then(() => db.transaction(fn));
+export function exclusive<T>(fn: () => Promise<T>): Promise<T> {
+  const run = chain.then(fn);
   chain = run.catch(() => undefined);
   return run;
 }
+
+/**
+ * Runs `fn` in one transaction, one at a time. Everything inside either
+ * commits together or rolls back together.
+ */
+export function inTransaction<T>(db: Db, fn: (tx: Tx) => Promise<T>): Promise<T> {
+  return exclusive(() => db.transaction(fn));
+}
+
+/**
+ * Resolves once the writes queued so far are finished. Reads wait for it: on
+ * one connection a read issued mid-transaction sees the half-written data.
+ * shortcut: a write queued in the same instant can still overlap, in practice never; make reads `exclusive` if it ever shows.
+ */
+export const writesIdle = (): Promise<void> => chain.then(() => undefined);

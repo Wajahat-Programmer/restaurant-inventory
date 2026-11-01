@@ -167,6 +167,24 @@ describe('managing people and PINs', () => {
     expect(await login(db, id, '5902', 2000)).toMatchObject({ ok: true });
   });
 
+  it('wrong recovery passphrases make the person wait, like wrong PINs, and a right one clears it', async () => {
+    const id = await setUpLock(db, OWNER);
+    const T = 10_000_000;
+    for (let i = 0; i < 4; i++) {
+      await expect(resetOwnerPin(db, 'guess ' + i, '5902', T)).rejects.toThrow(/not right\. \d tries left/);
+    }
+    // The fifth wrong try starts the wait.
+    await expect(resetOwnerPin(db, 'guess 5', '5902', T)).rejects.toThrow(/Wait 30 seconds/);
+    // Even the RIGHT passphrase is refused until the wait is over.
+    await expect(resetOwnerPin(db, 'my first restaurant', '5902', T + 5_000)).rejects.toThrow(/Too many wrong tries/);
+    expect(await login(db, id, '4829', T + 5_000)).toMatchObject({ ok: true });
+    await resetOwnerPin(db, 'my first restaurant', '5902', T + 31_000);
+    // After a success the counter starts again.
+    await expect(resetOwnerPin(db, 'wrong again', '1357', T + 40_000)).rejects.toThrow(/4 tries left/);
+    const log = (await db.select().from(schema.auditLog)).map(a => a.action);
+    expect(log.filter(a => a === 'recovery.failed')).toHaveLength(6);
+  });
+
   it('turning the lock off needs the owner PIN and removes everyone', async () => {
     const { ownerId } = await ownerAndStaff();
     await login(db, ownerId, '4829');

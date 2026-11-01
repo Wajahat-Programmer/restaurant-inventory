@@ -388,6 +388,24 @@ describe('backup passphrase', () => {
     expect(await screen.findByTestId('data-note')).toBeTruthy();
     expect(await screen.findByTestId('backup-now')).toBeTruthy();
   });
+
+  it('lets the owner leave photos out of backups, and remembers it', async () => {
+    await openApp(db, 'home');
+    await goMore('settings');
+    await press('open-data');
+    // The phone's keychain may already hold a passphrase from an earlier test.
+    await waitFor(() => expect(screen.queryByTestId('save-passphrase') ?? screen.queryByTestId('include-photos')).toBeTruthy());
+    if (screen.queryByTestId('save-passphrase')) {
+      await type('field-pass1', 'a good passphrase');
+      await type('field-pass2', 'a good passphrase');
+      await press('save-passphrase');
+    }
+    const sw = await screen.findByTestId('include-photos');
+    expect(sw.props.value).toBe(true);
+    await fireEvent(sw, 'valueChange', false);
+    await waitFor(async () => expect(await getSetting(db, 'backup.includePhotos')).toBe('0'));
+    await waitFor(() => expect(screen.getByTestId('include-photos').props.value).toBe(false));
+  });
 });
 
 describe('who did what', () => {

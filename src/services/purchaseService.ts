@@ -1,10 +1,11 @@
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { Db, inTransaction, Queryable, schema } from '../db/client';
 import { assertPaisa } from '../domain/money';
 import {
   paymentStatus,
   PaymentStatus,
   pricePerBase,
+  settle,
   supplierDue,
 } from '../domain/purchasing';
 import { dateSchema, SupplierInput, supplierInputSchema } from '../domain/schemas';
@@ -262,6 +263,10 @@ export interface PaymentInput {
 /** Pays a supplier. Overpaying what is owed is rejected. */
 export async function recordPayment(db: Db, input: PaymentInput): Promise<void> {
   requirePermission('finance');
+  const day = dateSchema.safeParse(input.date);
+  if (!day.success) {
+    throw new ValidationError(day.error.issues[0].message);
+  }
   assertPaisa(input.amountPaisa);
   if (input.amountPaisa <= 0) {
     throw new ValidationError('Payment must be more than 0');
@@ -298,11 +303,17 @@ export interface PurchaseRow {
   supplierName: string;
   date: string;
   totalPaisa: number;
+  /** Paid when the purchase was recorded. */
   paidPaisa: number;
+  /** Paid by now, counting later payments to the supplier (oldest debt first). */
+  settledPaisa: number;
   status: 'POSTED' | 'VOID';
+  /** Paid, part paid or on credit, as of now. */
   payment: PaymentStatus;
   lines: { itemId: number; itemName: string; qtyBase: number; totalPaisa: number }[];
 }
+
+const CHUNK = 500; // stay well under SQLite's limit on query parameters
 
 export async function listPurchases(
   db: Queryable,
@@ -323,10 +334,12 @@ export async function listPurchases(
     .where(opts.supplierId ? eq(purchases.supplierId, opts.supplierId) : undefined)
     .orderBy(desc(purchases.date), desc(purchases.id));
 
-  const out: PurchaseRow[] = [];
-  for (const r of rows) {
-    const lines = await db
+  // All the lines in a few queries, not one query per purchase.
+  const linesBy = new Map<number, PurchaseRow['lines']>();
+  for (let i = 0; i < rows.length; i += CHUNK) {
+    const found = await db
       .select({
+        purchaseId: purchaseLines.purchaseId,
         itemId: purchaseLines.itemId,
         itemName: schema.items.name,
         qtyBase: purchaseLines.qtyBase,
@@ -334,8 +347,33 @@ export async function listPurchases(
       })
       .from(purchaseLines)
       .innerJoin(schema.items, eq(schema.items.id, purchaseLines.itemId))
-      .where(eq(purchaseLines.purchaseId, r.id));
-    out.push({ ...r, payment: paymentStatus(r.totalPaisa, r.paidPaisa), lines });
+      .where(inArray(purchaseLines.purchaseId, rows.slice(i, i + CHUNK).map(r => r.id)))
+      .orderBy(purchaseLines.id);
+    for (const l of found) {
+      const list = linesBy.get(l.purchaseId) ?? [];
+      list.push({ itemId: l.itemId, itemName: l.itemName, qtyBase: l.qtyBase, totalPaisa: l.totalPaisa });
+      linesBy.set(l.purchaseId, list);
+    }
   }
-  return out;
+
+  // What each supplier's payments have settled.
+  const openings = new Map((await db.select({ id: suppliers.id, o: suppliers.openingBalancePaisa }).from(suppliers)).map(s => [s.id, s.o]));
+  const payments = await db
+    .select({ supplierId: supplierPayments.supplierId, purchaseId: supplierPayments.purchaseId, amount: supplierPayments.amountPaisa })
+    .from(supplierPayments);
+  const settled = new Map<number, number>();
+  for (const supplierId of new Set(rows.map(r => r.supplierId))) {
+    const mine = payments.filter(p => p.supplierId === supplierId);
+    const tied = (id: number) => mine.filter(p => p.purchaseId === id).reduce((a, p) => a + p.amount, 0);
+    const general = mine.filter(p => p.purchaseId === null).reduce((a, p) => a + p.amount, 0);
+    const posted = rows.filter(r => r.supplierId === supplierId && r.status === 'POSTED');
+    for (const [id, v] of settle(posted.map(r => ({ id: r.id, date: r.date, totalPaisa: r.totalPaisa, paidPaisa: r.paidPaisa, tiedPaisa: tied(r.id) })), openings.get(supplierId) ?? 0, general)) {
+      settled.set(id, v);
+    }
+  }
+
+  return rows.map(r => {
+    const settledPaisa = r.status === 'POSTED' ? settled.get(r.id) ?? r.paidPaisa : r.paidPaisa;
+    return { ...r, settledPaisa, payment: paymentStatus(r.totalPaisa, settledPaisa), lines: linesBy.get(r.id) ?? [] };
+  });
 }

@@ -13,6 +13,8 @@ export interface Manifest {
   createdAt: string;
   dbSha256: string;
   photoCount: number;
+  /** False for a database-only backup. Older backups do not say; they have photos. */
+  includesPhotos?: boolean;
 }
 
 export type ManifestCheck = { ok: true; manifest: Manifest } | { ok: false; message: string };

@@ -109,3 +109,17 @@ describe('runLocalBackup', () => {
     expect(await live.db.select().from(schema.backupLog).where(eq(schema.backupLog.status, 'failed'))).toEqual([]);
   });
 });
+
+describe('runLocalBackup and photos', () => {
+  it('leaves the photos out when the owner switched that off', async () => {
+    const { setSetting } = jest.requireActual('../../services/settingsService') as typeof import('../../services/settingsService');
+    await setSetting(live.db, 'backup.includePhotos', '0');
+    await fsp.mkdir(ports.dirs.photos, { recursive: true });
+    await fsp.writeFile(`${ports.dirs.photos}/a.jpg`, 'x'.repeat(5000));
+    const info = await runLocalBackup(live.db, ports, live, 'a good passphrase', '2026-10-25');
+    await setSetting(live.db, 'backup.includePhotos', '1');
+    ports = { ...ports, now: () => new Date(2026, 9, 25, 21, 0, 1) };
+    const full = await runLocalBackup(live.db, ports, live, 'a good passphrase', '2026-10-25', { keep: [info.name] });
+    expect(full.sizeBytes).toBeGreaterThan(info.sizeBytes);
+  });
+});

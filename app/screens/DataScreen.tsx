@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Card, Text, TextInput } from 'react-native-paper';
+import { Card, Switch, Text, TextInput } from 'react-native-paper';
 import { parseCsv } from '../../src/domain/csv';
 import { periodRange } from '../../src/domain/periods';
 import { BackupError } from '../../src/domain/crypto';
@@ -139,6 +139,7 @@ export default function DataScreen() {
     version: (await installedVersion()) ?? '0.0.0',
     driveAccount: await getSetting(d, 'drive.account'),
     driveLastOkAt: await getSetting(d, 'drive.lastOkAt'),
+    includePhotos: (await getSetting(d, 'backup.includePhotos')) !== '0',
   }), [driveTick]);
   const [backups, setBackups] = useState<BackupInfo[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
@@ -179,6 +180,7 @@ export default function DataScreen() {
       }
       const info = await runLocalBackup(db, ports(), handle, pass, todayISO());
       setNote(`✓ Backup saved: ${info.name} (${mb(info.sizeBytes)})`);
+      setDriveTick(t => t + 1); // refresh "Last good backup"
       await refreshList();
     } catch (e) {
       fail(e);
@@ -390,6 +392,22 @@ export default function DataScreen() {
               <Btn testID="backup-now" mode="contained" icon="cloud-upload" disabled={!!busy} onPress={backupNow}>
                 Back up now
               </Btn>
+              <View style={styles.row}>
+                <Switch
+                  testID="include-photos"
+                  value={data.includePhotos}
+                  onValueChange={async on => {
+                    await setSetting(db, 'backup.includePhotos', on ? '1' : '0');
+                    setDriveTick(t => t + 1);
+                  }}
+                />
+                <View style={styles.flex}>
+                  <Text>Include photos in backups</Text>
+                  <Text style={{ color: c.textSecondary }}>
+                    Switch off for smaller, faster backups. They still hold all your records; photos on this phone are kept.
+                  </Text>
+                </View>
+              </View>
               <Btn
                 testID="forget-passphrase"
                 textColor={c.danger}

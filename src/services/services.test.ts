@@ -188,10 +188,14 @@ describe('purchases', () => {
     await expect(
       recordPayment(db, { supplierId: b, date: '2026-10-09', amountPaisa: 0 }),
     ).rejects.toThrow('more than 0');
+    await expect(
+      recordPayment(db, { supplierId: b, date: 'tomorrow', amountPaisa: 100 }),
+    ).rejects.toThrow();
     await recordPayment(db, { supplierId: b, date: '2026-10-10', amountPaisa: 100000 });
     expect(await due()).toBe(0);
     const [row] = await listPurchases(db, { supplierId: b });
-    expect(row).toMatchObject({ payment: 'PARTIAL', paidPaisa: 20000, supplierName: 'City Wholesale' });
+    // Paid 20,000 on the day, 30,000 against it, and the rest of the supplier's payments settle the oldest debt.
+    expect(row).toMatchObject({ payment: 'PAID', paidPaisa: 20000, settledPaisa: 100000, supplierName: 'City Wholesale' });
   });
 
   it('validates the purchase before writing anything', async () => {

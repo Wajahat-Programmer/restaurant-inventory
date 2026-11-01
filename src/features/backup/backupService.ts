@@ -1,5 +1,5 @@
 import { eq, sql } from 'drizzle-orm';
-import { Db, migrate, schema } from '../../db/client';
+import { Db, exclusive, migrate, schema } from '../../db/client';
 import { migrations } from '../../db/migrations.generated';
 import { APP_ID, BACKUP_FORMAT, backupFileName, checkManifest, Manifest, retention } from '../../domain/backup';
 import { fromBase64, toBase64, utf8Decode, utf8Encode } from '../../domain/base64';
@@ -77,7 +77,7 @@ export async function createBackup(
   ports: BackupPorts,
   live: DbHandle,
   passphrase: string,
-  opts: { iterations?: number } = {},
+  opts: { iterations?: number; includePhotos?: boolean } = {},
 ): Promise<BackupInfo> {
   const { fs, zip, dirs } = ports;
   const work = join(dirs.work, 'backup');
@@ -85,11 +85,13 @@ export async function createBackup(
   await fs.mkdir(work);
   try {
     const dbCopy = join(work, 'restaurant.db');
-    await live.db.run(sql.raw(`VACUUM INTO '${dbCopy.replace(/'/g, "''")}'`));
+    // VACUUM cannot run inside a transaction, so it takes its turn between writes.
+    await exclusive(() => live.db.run(sql.raw(`VACUUM INTO '${dbCopy.replace(/'/g, "''")}'`)));
 
     let photoCount = 0;
     const sources = [dbCopy];
-    if (await fs.exists(dirs.photos)) {
+    const withPhotos = opts.includePhotos !== false;
+    if (withPhotos && (await fs.exists(dirs.photos))) {
       const photosCopy = join(work, 'photos');
       await fs.mkdir(photosCopy);
       for (const f of await fs.readDir(dirs.photos)) {
@@ -109,6 +111,7 @@ export async function createBackup(
       createdAt: ports.now().toISOString(),
       dbSha256: await fs.sha256(dbCopy),
       photoCount,
+      includesPhotos: withPhotos,
     };
     const manifestPath = join(work, 'manifest.json');
     await fs.writeBase64(manifestPath, toBase64(utf8Encode(JSON.stringify(manifest))));
@@ -226,17 +229,20 @@ export async function restoreBackup(
       check.close();
     }
 
-    // Photos first: nothing else has changed yet if this fails.
-    await fs.remove(photosOld);
-    const restoredPhotos = join(unpacked, 'photos');
-    if (await fs.exists(dirs.photos)) {
-      await fs.move(dirs.photos, photosOld);
-    }
-    photosSwapped = true;
-    if (await fs.exists(restoredPhotos)) {
-      await fs.move(restoredPhotos, dirs.photos);
-    } else {
-      await fs.mkdir(dirs.photos);
+    // Photos first: nothing else has changed yet if this fails. A database-only
+    // backup carries no photos, so the ones on this phone are left where they are.
+    if (manifest.includesPhotos !== false) {
+      await fs.remove(photosOld);
+      const restoredPhotos = join(unpacked, 'photos');
+      if (await fs.exists(dirs.photos)) {
+        await fs.move(dirs.photos, photosOld);
+      }
+      photosSwapped = true;
+      if (await fs.exists(restoredPhotos)) {
+        await fs.move(restoredPhotos, dirs.photos);
+      } else {
+        await fs.mkdir(dirs.photos);
+      }
     }
 
     // Then the database, keeping the old file until the new one opens.
@@ -250,7 +256,9 @@ export async function restoreBackup(
     try {
       handle = await ports.openDbFile(live.path);
       await handle.db.select().from(schema.items).limit(1); // it opens and reads
-      await rebasePhotoPaths(handle.db, dirs.photos);
+      if (manifest.includesPhotos !== false) {
+        await rebasePhotoPaths(handle.db, dirs.photos);
+      }
     } catch (e) {
       await fs.remove(live.path);
       await fs.move(dbOld, live.path);

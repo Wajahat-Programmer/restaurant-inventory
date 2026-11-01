@@ -93,6 +93,26 @@ describe('backup then restore', () => {
     expect(await nodeFs.exists(ports.dirs.work + '/restore')).toBe(false);
   });
 
+  it('a database-only backup holds no photos, is smaller, and restoring it leaves the photos on this phone alone', async () => {
+    await seed(live.db);
+    const before = await snapshot(live.db);
+    const full = await createBackup(ports, live, PASS, FAST);
+    const lean = await createBackup(ports, live, PASS, { ...FAST, includePhotos: false });
+    expect(lean.sizeBytes).toBeLessThan(full.sizeBytes);
+
+    await createItem(live.db, { name: 'Intruder', baseUnit: 'g' });
+    await photoFile('item-1-5.jpg', 'NEWER-LOCAL-BYTES'); // a photo on this phone that the backup never had
+    const restored = await restoreBackup(ports, live, lean.path, PASS);
+    expect(restored.manifest).toMatchObject({ includesPhotos: false, photoCount: 0 });
+    expect(await snapshot(restored.handle.db)).toEqual(before);
+    expect(await photoText('item-1-5.jpg')).toBe('NEWER-LOCAL-BYTES');
+    expect(await photoText('item-1-5-thumb.webp')).toBe('THUMB-BYTES');
+    const [p] = await listPhotos(restored.handle.db, 1);
+    expect(p.thumbPath).toBe(`${ports.dirs.photos}/item-1-5-thumb.webp`);
+    restored.handle.close();
+    expect(await nodeFs.exists(`${ports.dirs.photos}.old`)).toBe(false);
+  });
+
   it('a safety backup taken in the same second cannot overwrite the backup being restored', async () => {
     await seed(live.db);
     const original = await createBackup(ports, live, PASS, FAST);

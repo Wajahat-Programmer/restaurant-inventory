@@ -51,3 +51,36 @@ export function supplierDue(args: {
 export function pricePerBase(totalPaisa: Paisa, qtyBase: number): number {
   return qtyBase > 0 ? totalPaisa / qtyBase : 0;
 }
+
+export interface SettleInput {
+  id: number;
+  date: string;
+  totalPaisa: Paisa;
+  /** Paid when the purchase was recorded. */
+  paidPaisa: Paisa;
+  /** Later payments made against this purchase on purpose. */
+  tiedPaisa: Paisa;
+}
+
+/**
+ * How much of each purchase is settled now. Payments to a supplier that are not
+ * tied to one purchase pay the oldest debt first: the supplier's opening
+ * balance, then purchases from the oldest. This keeps the purchase list in
+ * step with what the supplier screen says is owed.
+ */
+export function settle(
+  purchases: SettleInput[],
+  openingBalancePaisa: Paisa,
+  generalPaymentsPaisa: Paisa,
+): Map<number, Paisa> {
+  let pool = Math.max(0, generalPaymentsPaisa - openingBalancePaisa);
+  const out = new Map<number, Paisa>();
+  const ordered = [...purchases].sort((a, b) => (a.date === b.date ? a.id - b.id : a.date < b.date ? -1 : 1));
+  for (const p of ordered) {
+    const own = Math.min(p.totalPaisa, p.paidPaisa + p.tiedPaisa);
+    const give = Math.min(pool, p.totalPaisa - own);
+    pool -= give;
+    out.set(p.id, own + give);
+  }
+  return out;
+}

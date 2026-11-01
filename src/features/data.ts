@@ -1,7 +1,7 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useRef, useState } from 'react';
 import { create } from 'zustand';
-import { Db } from '../db/client';
+import { Db, writesIdle } from '../db/client';
 import { ValidationError } from '../services/errors';
 import { useDb } from './DbProvider';
 
@@ -41,7 +41,7 @@ export function useQuery<T>(
       let alive = true;
       // Ignore answers to a question that has since changed.
       const current = () => alive && latestKey.current === key;
-      readRef.current(db).then(
+      writesIdle().then(() => readRef.current(db)).then(
         data => current() && setState({ data, error: undefined, loading: false }),
         e =>
           current() &&

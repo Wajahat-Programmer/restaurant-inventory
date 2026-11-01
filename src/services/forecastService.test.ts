@@ -127,7 +127,7 @@ describe('alerts', () => {
     expect(list.map(a => a.kind)).toEqual(['out', 'expired', 'runout', 'low']);
     expect(list[0].message).toBe('✖ Salt is out of stock');
     expect(list[1].message).toContain('Milk: 1 L has expired');
-    expect(list[2].message).toMatch(/Rice will run out in about [\d.]+ days/);
+    expect(list[2].message).toMatch(/Rice will run out (today|in about [\d.]+ days?)/);
     expect(list[3].message).toBe('⚠ Oil is low (300 ml left)');
   });
 
@@ -201,5 +201,15 @@ describe('settings', () => {
 
   it('dateOf gives the local calendar date', () => {
     expect(dateOf(noon('2026-10-25'))).toBe('2026-10-25');
+  });
+});
+
+describe('runsOutIn', () => {
+  it('says today for under a day, not "about 0 days"', () => {
+    const { runsOutIn } = jest.requireActual('./forecastService');
+    expect(runsOutIn(0)).toBe('today');
+    expect(runsOutIn(0.6)).toBe('today');
+    expect(runsOutIn(1)).toBe('in about 1 day');
+    expect(runsOutIn(2.4)).toBe('in about 2.4 days');
   });
 });

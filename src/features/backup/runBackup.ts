@@ -26,7 +26,8 @@ export async function runLocalBackup(
 ): Promise<BackupInfo> {
   requirePermission('manage');
   try {
-    const info = await createBackup(ports, live, passphrase);
+    const includePhotos = (await getSetting(db, 'backup.includePhotos')) !== '0';
+    const info = await createBackup(ports, live, passphrase, { includePhotos });
     await db.insert(backupLog).values({ kind: 'local', status: 'ok', fileName: info.name, sizeBytes: info.sizeBytes });
     await setSetting(db, 'backup.lastOkAt', String(ports.now().getTime()));
     await audit(db, 'backup.create', 'backup', null, { file: info.name, bytes: info.sizeBytes });

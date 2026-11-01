@@ -8,6 +8,7 @@ import {
   Role,
   secondsLeft,
   FREE_ATTEMPTS,
+  LockState,
 } from '../domain/auth';
 import { hashSecret, PinRecord, verifySecret } from '../domain/crypto';
 import { audit } from './auditService';
@@ -178,10 +179,30 @@ export async function changePin(db: Db, userId: number, oldPin: string, newPin: 
   });
 }
 
-/** Forgotten owner PIN: the recovery passphrase set at the start proves it is the owner. */
-export async function resetOwnerPin(db: Db, recoveryPassphrase: string, newPin: string): Promise<void> {
+const RECOVERY_TRIES_KEY = 'auth.recoveryTries';
+
+const readTries = async (q: Queryable): Promise<LockState> => {
+  try {
+    const t = JSON.parse(await getSetting(q, RECOVERY_TRIES_KEY)) as Partial<LockState>;
+    return { failedAttempts: Number(t.failedAttempts) || 0, lockedUntil: Number(t.lockedUntil) || 0 };
+  } catch {
+    return afterSuccess();
+  }
+};
+
+/**
+ * Forgotten owner PIN: the recovery passphrase set at the start proves it is the owner.
+ * Wrong guesses make the person wait, exactly like wrong PINs, so this door cannot
+ * be used to get round the PIN lockout.
+ */
+export async function resetOwnerPin(db: Db, recoveryPassphrase: string, newPin: string, nowMs = Date.now()): Promise<void> {
   checkPin(newPin);
-  await inTransaction(db, async tx => {
+  const outcome = await inTransaction(db, async tx => {
+    const tries = await readTries(tx);
+    const wait = secondsLeft(tries, nowMs);
+    if (wait > 0) {
+      return { ok: false, message: `Too many wrong tries. Wait ${wait} seconds and try again.` } as const;
+    }
     const stored = await getSetting(tx, RECOVERY_KEY);
     let rec: PinRecord | null = null;
     try {
@@ -190,7 +211,16 @@ export async function resetOwnerPin(db: Db, recoveryPassphrase: string, newPin: 
       rec = null;
     }
     if (!rec?.hash || !(await verifySecret(recoveryPassphrase.trim(), rec))) {
-      throw new ValidationError('That recovery passphrase is not right.');
+      const next = afterFailure(tries, nowMs);
+      await setSetting(tx, RECOVERY_TRIES_KEY, JSON.stringify(next));
+      await audit(tx, 'recovery.failed', 'user', null, { attempts: next.failedAttempts });
+      const left = secondsLeft(next, nowMs);
+      return {
+        ok: false,
+        message: left > 0
+          ? `That recovery passphrase is not right. Wait ${left} seconds before trying again.`
+          : `That recovery passphrase is not right. ${Math.max(FREE_ATTEMPTS - next.failedAttempts, 0)} tries left before a wait.`,
+      } as const;
     }
     const [owner] = await tx.select().from(users).where(and(eq(users.role, 'owner'), eq(users.isActive, true)));
     must(owner, 'No owner found');
@@ -199,8 +229,14 @@ export async function resetOwnerPin(db: Db, recoveryPassphrase: string, newPin: 
       .update(users)
       .set({ pinHash: h.hash, pinSalt: h.salt, pinIterations: h.iterations, ...afterSuccess() })
       .where(eq(users.id, owner.id));
+    await setSetting(tx, RECOVERY_TRIES_KEY, '');
     await audit(tx, 'pin.reset', 'user', owner.id);
+    return { ok: true } as const;
   });
+  // Thrown after the transaction commits, so the wrong try is remembered.
+  if (!outcome.ok) {
+    throw new ValidationError(outcome.message);
+  }
 }
 
 export async function deactivateUser(db: Db, userId: number): Promise<void> {
